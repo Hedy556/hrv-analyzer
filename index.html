@@ -365,16 +365,21 @@
         margin: 10px;
     }
     
-    @media (max-width: 768px) {
-    /* 其他現有的響應式代碼保持不變... */
+    .range-input-group:first-child {
+        display: none;
+    }
     
+    /* 或者更精確的選擇器，隱藏包含標題的那一行 */
+    .range-input-group:not([data-param]) {
+        display: none;
+    }
+
     .range-input-group {
         grid-template-columns: 1fr;
         gap: 15px;
         padding: 15px;
         background: #f9fafb;
         border-radius: 8px;
-        border-left: 4px solid #10b981;
     }
     
     /* 參數名稱標題 */
