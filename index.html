@@ -365,11 +365,75 @@
         margin: 10px;
     }
     
+    @media (max-width: 768px) {
+    /* 其他現有的響應式代碼保持不變... */
+    
     .range-input-group {
         grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 10px;
+        gap: 15px;
+        padding: 15px;
+        background: #f9fafb;
+        border-radius: 8px;
+        border-left: 4px solid #10b981;
     }
+    
+    /* 參數名稱標題 */
+    .param-title {
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #374151;
+        margin-bottom: 12px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    /* 數值輸入區域 */
+    .value-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .input-label {
+        font-size: 0.85em;
+        font-weight: 600;
+        color: #6b7280;
+    }
+    
+    .range-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 1em;
+        text-align: center;
+    }
+    
+    /* 說明輸入區域 */
+    .description-input {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .description-input .range-input {
+        text-align: left;
+        font-size: 0.9em;
+    }
+    
+    .range-input:focus {
+        border-color: #10b981;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+}
     
     .range-input-group label {
         font-weight: bold;
@@ -907,22 +971,48 @@ function setupDragAndDrop() {
         }
 
         function updateParameterRangesUI() {
-            const container = document.getElementById('parameterRanges');
-            container.innerHTML = '';
-            
-            Object.entries(systemSettings.parameterRanges).forEach(([param, range]) => {
-                const div = document.createElement('div');
-                div.className = 'range-input-group';
-                div.dataset.param = param;
-                div.innerHTML = `
-                    <label>${param}</label>
-                    <input type="number" class="range-input" value="${range.min}">
-                    <input type="number" class="range-input" value="${range.max}">
+    const container = document.getElementById('parameterRanges');
+    container.innerHTML = '';
+    
+    Object.entries(systemSettings.parameterRanges).forEach(([param, range]) => {
+        const div = document.createElement('div');
+        div.className = 'range-input-group';
+        div.dataset.param = param;
+        
+        // 檢查是否為手機版
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile) {
+            div.innerHTML = `
+                <div class="param-title">${param}</div>
+                <div class="value-inputs">
+                    <div class="input-group">
+                        <div class="input-label">最小值</div>
+                        <input type="number" class="range-input" value="${range.min}">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-label">最大值</div>
+                        <input type="number" class="range-input" value="${range.max}">
+                    </div>
+                </div>
+                <div class="description-input">
+                    <div class="input-label">說明</div>
                     <input type="text" class="range-input" value="${range.description}">
-                `;
-                container.appendChild(div);
-            });
+                </div>
+            `;
+        } else {
+            // 桌面版保持原來的格式
+            div.innerHTML = `
+                <label>${param}</label>
+                <input type="number" class="range-input" value="${range.min}">
+                <input type="number" class="range-input" value="${range.max}">
+                <input type="text" class="range-input" value="${range.description}">
+            `;
         }
+        
+        container.appendChild(div);
+    });
+}
 
         function updateClassificationUI() {
             const container = document.getElementById('classificationList');
@@ -1188,23 +1278,29 @@ function loadSettings() {
         }
 
         // 系統初始化
-        document.addEventListener('DOMContentLoaded', function() {
-             loadSettings();
-             
-            document.getElementById('barcodeInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    analyzeData();
-                }
-            });
-            
-            // 設置拖拽功能（僅限QR Code）
-            setupDragAndDrop();
-            
-            // 初始化預設輸入方式
-            updateStatus('✏️ 手動輸入模式', '');
-            
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    loadSettings();
+     
+    document.getElementById('barcodeInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            analyzeData();
+        }
+    });
+    
+    // 設置拖拽功能（僅限QR Code）
+    setupDragAndDrop();
+    
+    // 初始化預設輸入方式
+    updateStatus('✏️ 手動輸入模式', '');
+    
+    // 新增：響應式偵測，當視窗大小改變時重新渲染設定介面
+    window.addEventListener('resize', function() {
+        if (document.getElementById('parameterRanges').innerHTML !== '') {
+            updateParameterRangesUI();
+        }
+    });
+});
     </script>
 </body>
 </html>
