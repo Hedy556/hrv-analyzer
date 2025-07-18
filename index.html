@@ -1,0 +1,1124 @@
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRV報告掃描分析系統</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #374151; font-size: 1.8em; margin-bottom: 10px; }
+        .header p { color: #6b7280; }
+        
+        .nav-tabs {
+            display: flex;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            background: #f9fafb;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.3s;
+        }
+        .nav-tab.active { background: white; color: #374151; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .scan-section {
+            background: #f9fafb;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .barcode-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1.1em;
+            margin: 15px 0;
+        }
+        
+        .scan-btn {
+            background: #6b7280;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 1em;
+        }
+        .scan-btn:hover { background: #4b5563; }
+        .demo-btn { background: #10b981; }
+        .demo-btn:hover { background: #059669; }
+        
+        #status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        #status.success { background: #dcfce7; color: #166534; }
+        #status.error { background: #fef2f2; color: #dc2626; }
+        
+        .results {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            margin-top: 20px;
+        }
+        .results.show { display: block; }
+        
+        .parameters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .param-card {
+            background: white;
+            padding: 16px;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            text-align: center;
+        }
+        .param-card h4 { color: #374151; margin-bottom: 10px; }
+        .param-card .value { font-size: 1.8em; font-weight: bold; color: #111827; }
+        .param-card .unit { font-size: 0.8em; color: #6b7280; }
+        .param-card.normal { border-left: 3px solid #10b981; }
+        .param-card.warning { border-left: 3px solid #f59e0b; }
+        .param-card.danger { border-left: 3px solid #ef4444; }
+        
+        .analysis-result {
+            background: #f3f4f6;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .analysis-result h3 { font-size: 1.3em; margin-bottom: 10px; }
+        
+        .recommendations {
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .recommendations h4 { margin-bottom: 15px; color: #374151; }
+        .recommendations ul { list-style: none; }
+        .recommendations li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+            color: #6b7280;
+        }
+        .recommendations li:before { content: "• "; color: #10b981; font-weight: bold; }
+        
+        .settings-section { margin-bottom: 30px; }
+        .settings-section h3 {
+            color: #374151;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .range-input-group {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px 150px;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .range-input { padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; }
+        
+        .classification-section { margin-bottom: 30px; }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .add-classification-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            cursor: pointer;
+        }
+        
+        .classification-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .classification-item.type1 { border-left: 4px solid #f59e0b; }
+        .classification-item.type2 { border-left: 4px solid #f59e0b; }
+        .classification-item.type3 { border-left: 4px solid #ef4444; }
+        .classification-item.normal { border-left: 4px solid #10b981; }
+        .classification-item.custom1,
+        .classification-item.custom2,
+        .classification-item.custom3 { border-left: 4px solid #6366f1; }
+        
+        .classification-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        .delete-btn {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #6b7280; }
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+        }
+        .form-textarea { min-height: 80px; resize: vertical; }
+        
+        .suggestions-list { margin-top: 10px; }
+        .suggestion-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .suggestion-input { flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; }
+        .remove-btn {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+            border-radius: 4px;
+            padding: 6px 8px;
+            cursor: pointer;
+        }
+        .add-btn {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        
+        .save-btn {
+            background: #10b981;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .reset-btn { background: #ef4444; }
+        
+        .disclaimer {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            color: #7f1d1d;
+            text-align: center;
+        }
+
+        /* 新增樣式 */
+        .input-method-tabs {
+            display: flex;
+            background: #f3f4f6;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #d1d5db;
+        }
+        .method-tab {
+            flex: 1;
+            padding: 12px;
+            background: #f3f4f6;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            transition: all 0.3s;
+            border-radius: 8px;
+        }
+        .method-tab.active { background: #10b981; color: white; }
+        .method-tab:hover { background: #e5e7eb; }
+        .method-tab.active:hover { background: #059669; }
+
+        .input-section { display: none; margin: 15px 0; }
+        .input-section.active { display: block; }
+
+        .upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+            margin: 15px 0;
+        }
+        .upload-area:hover {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+        .upload-area.dragover {
+            border-color: #10b981;
+            background: #dcfce7;
+        }
+
+        .upload-content {
+            color: #6b7280;
+        }
+        .upload-icon {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        .upload-hint {
+            font-size: 0.9em;
+            color: #9ca3af;
+            margin-top: 5px;
+        }
+
+        .image-preview {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .image-preview img {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+        .preview-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 6px;
+            font-size: 0.9em;
+            color: #6b7280;
+        }
+
+        .processing-status {
+            margin: 15px 0;
+            padding: 12px;
+            border-radius: 6px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            text-align: center;
+        }
+        .processing-status.success {
+            background: #dcfce7;
+            border-color: #86efac;
+            color: #166534;
+        }
+        .processing-status.error {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 HRV報告掃描分析系統</h1>
+            <p>掃描報告上的QR Code，立即獲得個人化分析結果</p>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="switchTab('scanner')">📱 掃描分析</button>
+            <button class="nav-tab" onclick="switchTab('settings')">⚙️ 自訂設定</button>
+        </div>
+
+        <div id="scanner-tab" class="tab-content active">
+            <div class="scan-section">
+                <label>🔍 選擇掃描方式：</label>
+                
+                <!-- 輸入方式選擇 -->
+                <div class="input-method-tabs">
+                    <button class="method-tab active" onclick="switchInputMethod('manual')">✏️ 手動輸入</button>
+                    <button class="method-tab" onclick="switchInputMethod('qrcode')">📱 QR Code掃描</button>
+                </div>
+
+                <!-- 手動輸入區域 -->
+                <div id="manual-input" class="input-section active">
+                    <label>請輸入HRV數據：</label>
+                    <input type="text" id="barcodeInput" class="barcode-input" 
+                           placeholder="範例：RMSSD=52.4&pNN50=30&LF=615.2&HF=525.8&LFHF=1.2&SDNN=68.3">
+                </div>
+
+                <!-- QR Code上傳區域 -->
+                <div id="qrcode-input" class="input-section">
+                    <label>上傳QR Code圖片：</label>
+                    <div class="upload-area" onclick="document.getElementById('qrcodeFile').click()">
+                        <div class="upload-content">
+                            <div class="upload-icon">📱</div>
+                            <div>點擊上傳QR Code圖片</div>
+                            <div class="upload-hint">支援 JPG, PNG, GIF 格式</div>
+                        </div>
+                    </div>
+                    <input type="file" id="qrcodeFile" accept="image/*" style="display: none;" onchange="processQRCodeImage(this)">
+                    <div id="qrcodePreview" class="image-preview"></div>
+                </div>
+
+                <div id="status">✏️ 手動輸入模式</div>
+                
+                <button class="scan-btn" onclick="analyzeData()">🔍 分析報告</button>
+                <button class="scan-btn demo-btn" onclick="loadDemo()">📋 載入示範數據</button>
+                <button class="scan-btn" onclick="clearInput()">🗑️ 清除</button>
+            </div>
+
+            <div id="results" class="results">
+                <div class="result-header">
+                    <h2 style="margin-bottom: 20px; line-height: 1.1;">📊 分析結果</h2>
+        <p style="margin-bottom: 25px; line-height: 1;">基於您的HRV參數進行的自律神經功能評估</p>
+                </div>
+                <div id="parameters" class="parameters"></div>
+                <div id="analysisResult" class="analysis-result"></div>
+                <div class="recommendations">
+                    <h4>💡 個人化建議</h4>
+                    <ul id="recommendationsList"></ul>
+                </div>
+                <div class="disclaimer">
+                    <strong>⚠️ 重要聲明：</strong>
+                    本分析結果僅供參考，不構成醫療診斷。如有健康疑慮，請諮詢專業醫療人員。
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-tab" class="tab-content">
+            <div class="settings-section">
+                <h3>📊 HRV參數正常範圍設定</h3>
+                <div class="range-input-group">
+                    <label>參數名稱</label>
+                    <label>最小值</label>
+                    <label>最大值</label>
+                    <label>說明</label>
+                </div>
+                <div id="parameterRanges"></div>
+            </div>
+
+            <div class="classification-section">
+                <div class="section-header">
+                    <h3>🏷️ 分類標準與建議設定</h3>
+                    <button class="add-classification-btn" onclick="addNewClassification()">+ 新增分類</button>
+                </div>
+                <div id="classificationList"></div>
+            </div>
+
+            <div class="settings-section">
+                <button class="save-btn" onclick="saveSettings()">💾 儲存設定</button>
+                <button class="save-btn reset-btn" onclick="resetToDefault()">🔄 恢復預設</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let systemSettings = {
+            parameterRanges: {
+                'RMSSD': { min: 30, max: 100, description: '連續心跳間隔差異' },
+                'pNN50': { min: 10, max: 50, description: '心跳變異程度' },
+                'LF': { min: 300, max: 1500, description: '低頻功率' },
+                'HF': { min: 300, max: 1000, description: '高頻功率' },
+                'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' },
+                'SDNN': { min: 50, max: 150, description: '心跳變異標準差' }
+            },
+            classificationRules: {
+                type1: { 
+                    name: '類型一 - 交感神經過度活躍',
+                    description: '個性容易緊張、工作壓力很大、生活步調緊湊的人',
+                    condition: 'LFHF > 2.5',
+                    supplements: ['穀維素', 'GABA'],
+                    lifestyle: ['放鬆練習', '減少咖啡因', '深呼吸訓練']
+                },
+                type2: { 
+                    name: '類型二 - 副交感神經過度活躍',
+                    description: '活動量不足、缺乏運動的族群',
+                    condition: 'LFHF < 0.5',
+                    supplements: ['唐辛子', '人蔘皂甘'],
+                    lifestyle: ['適度運動', '規律作息', '提升活力']
+                },
+                type3: { 
+                    name: '類型三 - 多項指標異常',
+                    description: '綜合性問題，需要全面性調理',
+                    condition: '3個以上參數超出正常範圍',
+                    supplements: ['唐辛子+穀維素', '人蔘皂甘+穀維素'],
+                    lifestyle: ['就醫諮詢', '密切監控', '綜合調理']
+                },
+                normal: { 
+                    name: '正常範圍',
+                    description: '各項指標均在健康範圍內',
+                    condition: '所有參數在正常範圍內',
+                    supplements: ['維持現狀'],
+                    lifestyle: ['保持良好習慣', '定期檢測']
+                }
+            }
+        };
+
+        let currentInputMethod = 'manual';
+
+        function switchInputMethod(method) {
+            currentInputMethod = method;
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.method-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 更新輸入區域顯示
+            document.querySelectorAll('.input-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(method + '-input').classList.add('active');
+            
+            // 更新狀態顯示
+            const statusMessages = {
+                manual: '✏️ 手動輸入模式',
+                qrcode: '📱 QR Code掃描模式 - 請上傳圖片'
+            };
+            
+            document.getElementById('status').textContent = statusMessages[method];
+            document.getElementById('status').className = '';
+        }
+
+function processQRCodeImage(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    updateStatus('🔄 正在處理QR Code圖片...', 'processing');
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            displayImagePreview('qrcodePreview', img.src, file.name);
+            
+            // 模擬QR碼識別過程
+            setTimeout(() => {
+                const mockQRData = simulateQRCodeReading(file.name);
+                if (mockQRData) {
+                    document.getElementById('barcodeInput').value = mockQRData;
+                    updateStatus('✅ QR Code讀取成功！', 'success');
+                } else {
+                    updateStatus('❌ 無法識別QR Code，請嘗試其他圖片', 'error');
+                }
+            }, 2000);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+// 在這裡新增 setupDragAndDrop 函數
+function setupDragAndDrop() {
+    const uploadAreas = document.querySelectorAll('.upload-area');
+    
+    uploadAreas.forEach(area => {
+        area.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            area.classList.add('dragover');
+        });
+        
+        area.addEventListener('dragleave', () => {
+            area.classList.remove('dragover');
+        });
+        
+        area.addEventListener('drop', (e) => {
+            e.preventDefault();
+            area.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    if (area.closest('#qrcode-input')) {
+                        processQRCodeImage({ files: [file] });
+                    }
+                }
+            }
+        });
+    });
+}
+
+        function displayImagePreview(containerId, imageSrc, fileName) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `
+                <img src="${imageSrc}" alt="預覽圖片">
+                <div class="preview-info">
+                    <strong>檔案：</strong>${fileName}<br>
+                    <span>正在識別中...</span>
+                </div>
+            `;
+        }
+
+        function simulateQRCodeReading(fileName) {
+            // 模擬不同的QR碼識別結果
+            const mockResults = [
+                "https://hospital.com/report?RMSSD=41.7&pNN50=22&LF=685.4&HF=445.9&LFHF=1.8&SDNN=71.2",
+                "https://clinic.com/hrv-data?RMSSD=55.1&pNN50=35&LF=590.8&HF=580.3&LFHF=1.0&SDNN=82.6",
+                "https://health.com/analysis?RMSSD=33.8&pNN50=15&LF=950.2&HF=285.4&LFHF=3.3&SDNN=58.9"
+            ];
+            
+            // 根據檔名特性決定是否成功識別
+            if (fileName.toLowerCase().includes('qr') || fileName.toLowerCase().includes('code')) {
+                return mockResults[Math.floor(Math.random() * mockResults.length)];
+            }
+            
+            // 80% 機率成功識別（QR碼通常更容易識別）
+            return Math.random() > 0.2 ? mockResults[Math.floor(Math.random() * mockResults.length)] : null;
+        }
+
+        function updateStatus(message, type = '') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            statusElement.className = type;
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            if (tabName === 'settings') {
+                updateSettingsUI();
+            }
+        }
+
+        function loadDemo() {
+            document.getElementById('barcodeInput').value = "https://example.com/hrv?RMSSD=52.4&pNN50=30&LF=615.2&HF=525.8&LFHF=1.2&SDNN=68.3";
+            document.getElementById('status').textContent = '✅ 示範數據已載入';
+            document.getElementById('status').className = 'success';
+        }
+
+        function clearInput() {
+            document.getElementById('barcodeInput').value = '';
+            document.getElementById('results').classList.remove('show');
+            
+            // 清除QR碼圖片預覽
+            document.getElementById('qrcodePreview').innerHTML = '';
+            
+            // 重置檔案輸入
+            document.getElementById('qrcodeFile').value = '';
+            
+            // 重置狀態
+            const statusMessages = {
+                manual: '✏️ 手動輸入模式',
+                qrcode: '📱 QR Code掃描模式 - 請上傳圖片'
+            };
+            
+            updateStatus(statusMessages[currentInputMethod] || '✏️ 手動輸入模式', '');
+            
+        }
+
+        function isValidHRVData(inputValue) {
+            if (!inputValue) return false;
+            const requiredParams = ['RMSSD', 'pNN50', 'LF', 'HF', 'LFHF', 'SDNN'];
+            return requiredParams.every(param => inputValue.includes(param + '='));
+        }
+
+        function parseData(dataString) {
+            const params = {};
+            
+            if (dataString.includes('hrv?') || dataString.includes('&')) {
+                let cleanUrl = dataString;
+                const hrvIndex = dataString.indexOf('hrv?');
+                if (hrvIndex !== -1) {
+                    cleanUrl = dataString.substring(hrvIndex + 4);
+                } else {
+                    const questionIndex = dataString.indexOf('?');
+                    if (questionIndex !== -1) {
+                        cleanUrl = dataString.substring(questionIndex + 1);
+                    }
+                }
+                
+                const urlParams = new URLSearchParams(cleanUrl);
+                for (const [key, value] of urlParams) {
+                    const numValue = parseFloat(value);
+                    if (!isNaN(numValue)) {
+                        params[key] = numValue;
+                    }
+                }
+            }
+            
+            return params;
+        }
+
+        function analyzeData() {
+            const inputValue = document.getElementById('barcodeInput').value.trim();
+            
+            if (!inputValue) {
+                alert('請輸入數據！');
+                return;
+            }
+
+            if (!isValidHRVData(inputValue)) {
+                alert('❌ 數據格式錯誤！');
+                return;
+            }
+
+            try {
+                const params = parseData(inputValue);
+                const requiredParams = ['RMSSD', 'pNN50', 'LF', 'HF', 'LFHF', 'SDNN'];
+                const missingParams = requiredParams.filter(param => !(param in params));
+                
+                if (missingParams.length > 0) {
+                    alert(`❌ 缺少參數：${missingParams.join(', ')}`);
+                    return;
+                }
+                
+                displayParameters(params);
+                const analysis = analyzeHRV(params);
+                displayAnalysis(analysis);
+                
+                document.getElementById('results').classList.add('show');
+                document.getElementById('status').textContent = '✅ 分析完成！';
+                document.getElementById('status').className = 'success';
+                
+            } catch (error) {
+                alert('❌ 數據處理錯誤！');
+            }
+        }
+
+        function analyzeHRV(params) {
+            let status = 'normal';
+            let indicators = [];
+            
+            Object.entries(params).forEach(([key, value]) => {
+                const range = systemSettings.parameterRanges[key];
+                if (range && (value < range.min || value > range.max)) {
+                    indicators.push(`${key}超出正常範圍`);
+                }
+            });
+            
+            if (params.LFHF > 2.5) {
+                status = 'type1';
+            } else if (params.LFHF < 0.5) {
+                status = 'type2';
+            } else if (indicators.length >= 3) {
+                status = 'type3';
+            }
+            
+            return { status, indicators };
+        }
+
+        function displayParameters(params) {
+            const container = document.getElementById('parameters');
+            container.innerHTML = '';
+            
+            const parameterOrder = ['RMSSD', 'pNN50', 'LF', 'HF', 'LFHF', 'SDNN'];
+            
+            parameterOrder.forEach(key => {
+                if (params[key] !== undefined) {
+                    const value = params[key];
+                    const range = systemSettings.parameterRanges[key];
+                    
+                    let status = 'normal';
+                    if (range && (value < range.min || value > range.max)) {
+                        status = value < range.min ? 'warning' : 'danger';
+                    }
+                    
+                    const card = document.createElement('div');
+                    card.className = `param-card ${status}`;
+                    card.innerHTML = `
+                        <h4>${key}</h4>
+                        <div class="value">${Number.isInteger(value) ? value : value.toFixed(1)}</div>
+                    `;
+                    
+                    container.appendChild(card);
+                }
+            });
+        }
+
+        function displayAnalysis(analysis) {
+            const resultDiv = document.getElementById('analysisResult');
+            const recommendationsDiv = document.getElementById('recommendationsList');
+            
+            const rule = systemSettings.classificationRules[analysis.status];
+            let statusText = rule ? rule.name : '正常範圍';
+            
+            resultDiv.innerHTML = `
+                <h3>📊 ${statusText}</h3>
+                <p>基於您的HRV參數分析結果</p>
+            `;
+            
+            recommendationsDiv.innerHTML = '';
+            
+            const recommendations = getRecommendations(analysis);
+            recommendations.forEach(rec => {
+                const li = document.createElement('li');
+                li.textContent = rec;
+                recommendationsDiv.appendChild(li);
+            });
+        }
+
+        function getRecommendations(analysis) {
+            const recommendations = [];
+            
+            if (analysis.indicators.length > 0) {
+                recommendations.push(`檢測發現：${analysis.indicators.join('、')}`);
+            }
+            
+            const rule = systemSettings.classificationRules[analysis.status];
+            if (rule) {
+                if (rule.supplements && rule.supplements.length > 0) {
+                    recommendations.push(`建議營養品：${rule.supplements.join(' 或 ')}`);
+                }
+                
+                if (rule.lifestyle && rule.lifestyle.length > 0) {
+                    rule.lifestyle.forEach(advice => {
+                        recommendations.push(advice);
+                    });
+                }
+            }
+            
+            recommendations.push('建議諮詢專業醫療人員');
+            return recommendations;
+        }
+
+        function updateSettingsUI() {
+            updateParameterRangesUI();
+            updateClassificationUI();
+        }
+
+        function updateParameterRangesUI() {
+            const container = document.getElementById('parameterRanges');
+            container.innerHTML = '';
+            
+            Object.entries(systemSettings.parameterRanges).forEach(([param, range]) => {
+                const div = document.createElement('div');
+                div.className = 'range-input-group';
+                div.dataset.param = param;
+                div.innerHTML = `
+                    <label>${param}</label>
+                    <input type="number" class="range-input" value="${range.min}">
+                    <input type="number" class="range-input" value="${range.max}">
+                    <input type="text" class="range-input" value="${range.description}">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function updateClassificationUI() {
+            const container = document.getElementById('classificationList');
+            container.innerHTML = '';
+            
+            Object.entries(systemSettings.classificationRules).forEach(([type, rule], index) => {
+                const item = document.createElement('div');
+                item.className = `classification-item ${type}`;
+                item.dataset.type = type;
+                
+                item.innerHTML = `
+                    <div class="classification-header">
+                        <div><strong>分類 ${index + 1}</strong></div>
+                        <button class="delete-btn" onclick="deleteClassification('${type}')">刪除</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>分類名稱：</label>
+                        <input type="text" class="form-input" value="${rule.name}" 
+                               onchange="updateClassificationField('${type}', 'name', this.value)">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>描述（代表的狀況）：</label>
+                        <textarea class="form-input form-textarea" 
+                                  onchange="updateClassificationField('${type}', 'description', this.value)"
+                                  placeholder="例如：個性容易緊張、工作壓力很大、生活步調緊湊的人">${rule.description || ''}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>複合分類基準：</label>
+                        <input type="text" class="form-input" value="${rule.condition}" 
+                               onchange="updateClassificationField('${type}', 'condition', this.value)"
+                               placeholder="例如：LFHF > 2.5">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>營養品補充建議：</label>
+                        <div class="suggestions-list" data-type="${type}" data-list="supplements">
+                            ${rule.supplements.map((item, itemIndex) => `
+                                <div class="suggestion-item">
+                                    <input type="text" class="suggestion-input" value="${item}" 
+                                           onchange="updateSuggestionItem('${type}', 'supplements', ${itemIndex}, this.value)">
+                                    <button class="remove-btn" onclick="removeSuggestionItem('${type}', 'supplements', ${itemIndex})">移除</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="add-btn" onclick="addSuggestionItem('${type}', 'supplements')">+ 新增營養品</button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>生活改善建議：</label>
+                        <div class="suggestions-list" data-type="${type}" data-list="lifestyle">
+                            ${rule.lifestyle.map((item, itemIndex) => `
+                                <div class="suggestion-item">
+                                    <input type="text" class="suggestion-input" value="${item}" 
+                                           onchange="updateSuggestionItem('${type}', 'lifestyle', ${itemIndex}, this.value)">
+                                    <button class="remove-btn" onclick="removeSuggestionItem('${type}', 'lifestyle', ${itemIndex})">移除</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="add-btn" onclick="addSuggestionItem('${type}', 'lifestyle')">+ 新增建議</button>
+                    </div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+
+        function addNewClassification() {
+            const existingTypes = Object.keys(systemSettings.classificationRules);
+            let newTypeId = 'custom1';
+            let counter = 1;
+            
+            while (existingTypes.includes(newTypeId)) {
+                counter++;
+                newTypeId = `custom${counter}`;
+            }
+            
+            systemSettings.classificationRules[newTypeId] = {
+                name: `自訂分類 ${counter}`,
+                description: '',
+                condition: '',
+                supplements: [''],
+                lifestyle: ['']
+            };
+            
+            updateClassificationUI();
+        }
+
+        function deleteClassification(type) {
+            if (confirm('確定要刪除這個分類嗎？')) {
+                delete systemSettings.classificationRules[type];
+                updateClassificationUI();
+            }
+        }
+
+        function updateClassificationField(type, field, value) {
+            if (systemSettings.classificationRules[type]) {
+                systemSettings.classificationRules[type][field] = value;
+            }
+        }
+
+        function addSuggestionItem(type, listType) {
+            const rule = systemSettings.classificationRules[type];
+            if (!rule || !rule[listType]) return;
+            
+            rule[listType].push('');
+            updateClassificationUI();
+        }
+
+        function removeSuggestionItem(type, listType, index) {
+            const rule = systemSettings.classificationRules[type];
+            if (!rule || !rule[listType] || index < 0) return;
+            
+            rule[listType].splice(index, 1);
+            updateClassificationUI();
+        }
+
+        function updateSuggestionItem(type, listType, index, value) {
+            const rule = systemSettings.classificationRules[type];
+            if (rule && rule[listType] && index >= 0) {
+                rule[listType][index] = value;
+            }
+        }
+
+
+function collectClassificationSettings() {
+    const rules = {};
+    const items = document.querySelectorAll('.classification-item[data-type]');
+    
+    items.forEach(item => {
+        const type = item.dataset.type;
+        const inputs = item.querySelectorAll('input, textarea');
+        
+        // 基本資訊
+        const nameInput = item.querySelector('input[type="text"]');
+        const descTextarea = item.querySelector('textarea');
+        const conditionInputs = item.querySelectorAll('input[type="text"]');
+        
+        // 營養品建議
+        const suppInputs = item.querySelectorAll('.suggestions-list[data-list="supplements"] input');
+        const supplements = Array.from(suppInputs).map(i => i.value.trim()).filter(v => v);
+        
+        // 生活建議
+        const lifeInputs = item.querySelectorAll('.suggestions-list[data-list="lifestyle"] input');
+        const lifestyle = Array.from(lifeInputs).map(i => i.value.trim()).filter(v => v);
+        
+        rules[type] = {
+            name: nameInput ? nameInput.value.trim() : '',
+            description: descTextarea ? descTextarea.value.trim() : '',
+            condition: conditionInputs[1] ? conditionInputs[1].value.trim() : '',
+            supplements: supplements.length > 0 ? supplements : [''],
+            lifestyle: lifestyle.length > 0 ? lifestyle : ['']
+        };
+    });
+    
+    return rules;
+}
+
+function loadSettings() {
+    try {
+        const savedSettings = localStorage.getItem('hrvSystemSettings');
+        if (savedSettings) {
+            const parsedSettings = JSON.parse(savedSettings);
+            
+            // 合併設定，保留預設值作為備份
+            if (parsedSettings.parameterRanges) {
+                systemSettings.parameterRanges = {
+                    ...systemSettings.parameterRanges,
+                    ...parsedSettings.parameterRanges
+                };
+            }
+            
+            if (parsedSettings.classificationRules) {
+                systemSettings.classificationRules = {
+                    ...systemSettings.classificationRules,
+                    ...parsedSettings.classificationRules
+                };
+            }
+            
+            console.log('設定已載入');
+        }
+    } catch (error) {
+        console.error('載入設定失敗：', error);
+        // 如果載入失敗，保持使用預設設定
+    }
+}
+
+        function saveSettings() {
+            const paramRanges = {};
+            const rangeGroups = document.querySelectorAll('.range-input-group[data-param]');
+            
+            rangeGroups.forEach(elem => {
+                const param = elem.dataset.param;
+                const inputs = elem.querySelectorAll('input');
+                
+                paramRanges[param] = {
+                    min: parseFloat(inputs[0].value) || 0,
+                    max: parseFloat(inputs[1].value) || 100,
+                    description: inputs[2].value || ''
+                };
+            });
+            const classificationRules = collectClassificationSettings();
+
+            systemSettings.parameterRanges = paramRanges;
+            systemSettings.classificationRules = classificationRules;
+
+                try {
+        localStorage.setItem('hrvSystemSettings', JSON.stringify(systemSettings));
+        alert('設定已儲存！');
+    } catch (error) {
+        console.error('儲存設定時發生錯誤：', error);
+        alert('儲存失敗：' + error.message);
+    }
+}
+
+        function resetToDefault() {
+            if (confirm('確定要恢復預設設定嗎？')) {
+                systemSettings.parameterRanges = {
+                    'RMSSD': { min: 30, max: 100, description: '連續心跳間隔差異' },
+                    'pNN50': { min: 10, max: 50, description: '心跳變異程度' },
+                    'LF': { min: 300, max: 1500, description: '低頻功率' },
+                    'HF': { min: 300, max: 1000, description: '高頻功率' },
+                    'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' },
+                    'SDNN': { min: 50, max: 150, description: '心跳變異標準差' }
+                };
+                
+                systemSettings.classificationRules = {
+                    type1: { 
+                        name: '類型一 - 交感神經過度活躍',
+                        description: '個性容易緊張、工作壓力很大、生活步調緊湊的人',
+                        condition: 'LFHF > 2.5',
+                        supplements: ['穀維素', 'GABA'],
+                        lifestyle: ['放鬆練習', '減少咖啡因', '深呼吸訓練']
+                    },
+                    type2: { 
+                        name: '類型二 - 副交感神經過度活躍',
+                        description: '活動量不足、缺乏運動的族群',
+                        condition: 'LFHF < 0.5',
+                        supplements: ['唐辛子', '人蔘皂甘'],
+                        lifestyle: ['適度運動', '規律作息', '提升活力']
+                    },
+                    type3: { 
+                        name: '類型三 - 多項指標異常',
+                        description: '綜合性問題，需要全面性調理',
+                        condition: '3個以上參數超出正常範圍',
+                        supplements: ['唐辛子+穀維素', '人蔘皂甘+穀維素'],
+                        lifestyle: ['就醫諮詢', '密切監控', '綜合調理']
+                    },
+                    normal: { 
+                        name: '正常範圍',
+                        description: '各項指標均在健康範圍內',
+                        condition: '所有參數在正常範圍內',
+                        supplements: ['維持現狀'],
+                        lifestyle: ['保持良好習慣', '定期檢測']
+                    }
+                };
+                
+                updateSettingsUI();
+                alert('已恢復預設設定！');
+            }
+        }
+
+        // 系統初始化
+        document.addEventListener('DOMContentLoaded', function() {
+             loadSettings();
+             
+            document.getElementById('barcodeInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    analyzeData();
+                }
+            });
+            
+            // 設置拖拽功能（僅限QR Code）
+            setupDragAndDrop();
+            
+            // 初始化預設輸入方式
+            updateStatus('✏️ 手動輸入模式', '');
+            
+        });
+    </script>
+</body>
+</html>
