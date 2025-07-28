@@ -112,9 +112,9 @@
         .param-card h4 { color: #374151; margin-bottom: 10px; }
         .param-card .value { font-size: 1.8em; font-weight: bold; color: #111827; }
         .param-card .unit { font-size: 0.8em; color: #6b7280; }
-        .param-card.normal { border-left: 3px solid #10b981; }
-        .param-card.warning { border-left: 3px solid #f59e0b; }
-        .param-card.danger { border-left: 3px solid #ef4444; }
+        .param-card.normal .value { color: #10b981; }  /* 綠色文字 */
+        .param-card.warning .value { color: #f59e0b; } /* 黃色文字 */
+        .param-card.danger .value { color: #ef4444; }  /* 紅色文字 */
         
         .analysis-result {
             background: #f3f4f6;
@@ -365,13 +365,9 @@
         margin: 10px;
     }
     
-    .range-input-group:first-child {
-        display: none;
-    }
-    
     /* 或者更精確的選擇器，隱藏包含標題的那一行 */
     .range-input-group:not([data-param]) {
-        display: none;
+        display: none !important;
     }
 
     .range-input-group {
@@ -512,6 +508,80 @@
     }
 }
 
+/* 在這裡新增HRV分級相關的CSS */
+.hrv-grading-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.toggle-label {
+    font-weight: 600;
+    color: #374151;
+}
+
+.grading-info {
+    background: #fffbeb;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 15px 0;
+    border-left: 4px solid #f59e0b;
+}
+
+.grading-info ol {
+    margin-left: 20px;
+    color: #92400e;
+}
+
+.hrv-grade-item {
+    border-left: 4px solid #6366f1 !important;
+}
+
+.parameter-ranges {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.param-range {
+    background: #f9fafb;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    border: 1px solid #e5e7eb;
+}
+
+/* 在這裡新增HRV分級結果的樣式 */
+.hrv-grading-result {
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid;
+}
+
+.hrv-grading-result h4 {
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.hrv-grading-result p {
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+    </style>
+</head>
+
     </style>
 </head>
 <body>
@@ -597,7 +667,6 @@
             <div class="classification-section">
                 <div class="section-header">
                     <h3>🏷️ 分類標準與建議設定</h3>
-                    <button class="add-classification-btn" onclick="addNewClassification()">+ 新增分類</button>
                 </div>
                 <div id="classificationList"></div>
             </div>
@@ -648,6 +717,72 @@
                     supplements: ['維持現狀'],
                     lifestyle: ['保持良好習慣', '定期檢測']
                 }
+            },
+            hrvGrading: {
+                enabled: true,
+                grades: {
+                    grade1: {
+                        name: '極佳恢復狀況',
+                        rmssdRange: { min: 75, max: Infinity },
+                        conditions: {
+                             SDNN: { min: 93, max: Infinity },
+                             LFHF: { min: 0.3, max: 0.8 },
+                             pNN50: { min: 30, max: Infinity }
+                        },
+                        color: '#10b981',
+                        recommendations: ['維持現有生活型態', '定期監測保持狀態']
+                    },
+                    grade2: {
+                        name: '良好平衡狀況',
+                        rmssdRange: { min: 45, max: 75 },
+                        conditions: {
+                            LFHF: { min: 0.8, max: 2.0 },
+                            pNN50: { min: 15, max: 30 }
+                         },
+                        color: '#22c55e',
+                        recommendations: ['保持規律運動', '維持良好睡眠品質']
+                    },
+                    grade3: {
+                        name: '輕度疲勞狀態',
+                        rmssdRange: { min: 25, max: 45 },
+                        conditions: {
+                            LFHF: { min: 1.5, max: 3.0 },
+                            pNN50: { min: 10, max: 20 }
+                        },
+                        color: '#eab308',
+                        recommendations: ['適度休息調整', '注意壓力管理', '改善睡眠品質']
+                    },
+                    grade4: {
+                        name: '中度壓力狀態',
+                        rmssdRange: { min: 19, max: 30 },
+                        conditions: {
+                            LFHF: { min: 2.5, max: 4.0 },
+                            pNN50: { min: 6, max: 10 }
+                        },
+                        color: '#f59e0b',
+                        recommendations: ['需要充分休息', '建議減少工作壓力', '進行放鬆訓練']
+                    },
+                    grade5: {
+                        name: '高度壓力狀態',
+                        rmssdRange: { min: 12, max: 19 },
+                        conditions: {
+                            LFHF: { min: 3.5, max: 6.0 },
+                            pNN50: { min: 3, max: 6 }
+                        },
+                        color: '#ef4444',
+                        recommendations: ['立即休息調整', '尋求專業協助', '重新評估生活型態']
+                    },
+                    grade6: {
+                        name: '極度壓力狀態',
+                        rmssdRange: { min: 0, max: 12 },
+                        conditions: {
+                            LFHF: [{ min: 6.0, max: Infinity }, { min: 0, max: 0.3 }],
+                            pNN50: { min: 0, max: 3 }
+                        },
+                        color: '#dc2626',
+                        recommendations: ['緊急休息', '立即就醫諮詢', '全面生活型態調整']
+                    }
+                }
             }
         };
 
@@ -684,7 +819,17 @@ function processQRCodeImage(input) {
     reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-            displayImagePreview('qrcodePreview', img.src, file.name);
+            // 直接更新 upload-area 的內容
+            const uploadArea = document.querySelector('#qrcode-input .upload-area');
+            if (uploadArea) {
+                uploadArea.innerHTML = `
+                    <div class="upload-content">
+                        <img src="${img.src}" alt="QR Code預覽" style="max-width: 200px; max-height: 150px; border-radius: 6px; margin-bottom: 10px;">
+                        <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px;">${file.name}</div>
+                        <div style="font-size: 0.8em; color: #9ca3af;">正在識別中...</div>
+                    </div>
+                `;
+            }
             
             // 模擬QR碼識別過程
             setTimeout(() => {
@@ -692,8 +837,26 @@ function processQRCodeImage(input) {
                 if (mockQRData) {
                     document.getElementById('barcodeInput').value = mockQRData;
                     updateStatus('✅ QR Code讀取成功！', 'success');
+                    
+                    // 更新upload-area的狀態提示
+                    if (uploadArea) {
+                        const hintDiv = uploadArea.querySelector('.upload-content div:last-child');
+                        if (hintDiv) {
+                            hintDiv.textContent = '✅ 已讀取成功，點擊更換';
+                            hintDiv.style.color = '#059669';
+                        }
+                    }
                 } else {
                     updateStatus('❌ 無法識別QR Code，請嘗試其他圖片', 'error');
+                    
+                    // 更新upload-area的狀態提示
+                    if (uploadArea) {
+                        const hintDiv = uploadArea.querySelector('.upload-content div:last-child');
+                        if (hintDiv) {
+                            hintDiv.textContent = '❌ 無法識別，點擊重新上傳';
+                            hintDiv.style.color = '#dc2626';
+                        }
+                    }
                 }
             }, 2000);
         };
@@ -734,14 +897,8 @@ function setupDragAndDrop() {
 }
 
         function displayImagePreview(containerId, imageSrc, fileName) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = `
-                <img src="${imageSrc}" alt="預覽圖片">
-                <div class="preview-info">
-                    <strong>檔案：</strong>${fileName}<br>
-                    <span>正在識別中...</span>
-                </div>
-            `;
+            // 這個函數現在由 processQRCodeImage 直接處理
+            // 保留空函數避免錯誤
         }
 
         function simulateQRCodeReading(fileName) {
@@ -780,7 +937,23 @@ function setupDragAndDrop() {
         }
 
         function loadDemo() {
-            document.getElementById('barcodeInput').value = "https://example.com/hrv?RMSSD=52.4&pNN50=30&LF=615.2&HF=525.8&LFHF=1.2&SDNN=68.3";
+            // 載入示範數據到輸入框
+            document.getElementById('barcodeInput').value = "RMSSD=52.4&pNN50=30&LF=615.2&HF=525.8&LFHF=1.2&SDNN=68.3";
+    
+            // 只有在QR Code模式下才顯示圖片
+            if (currentInputMethod === 'qrcode') {
+                const uploadArea = document.querySelector('#qrcode-input .upload-area');
+                if (uploadArea) {
+                    uploadArea.innerHTML = `
+                        <div class="upload-content">
+                            <img src="./demo-qr.png" alt="示範QR Code" style="max-width: 200px; max-height: 150px; border-radius: 6px; margin-bottom: 10px;">
+                            <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px;">示範QR Code</div>
+                            <div style="font-size: 0.8em; color: #059669;">✅ 已載入示範數據，點擊更換</div>
+                        </div>
+                    `;
+                }
+            }
+    
             document.getElementById('status').textContent = '✅ 示範數據已載入';
             document.getElementById('status').className = 'success';
         }
@@ -788,21 +961,32 @@ function setupDragAndDrop() {
         function clearInput() {
             document.getElementById('barcodeInput').value = '';
             document.getElementById('results').classList.remove('show');
-            
+    
             // 清除QR碼圖片預覽
             document.getElementById('qrcodePreview').innerHTML = '';
-            
+    
             // 重置檔案輸入
             document.getElementById('qrcodeFile').value = '';
-            
+    
+            // 重置upload-area到原始狀態
+            const uploadArea = document.querySelector('#qrcode-input .upload-area');
+            if (uploadArea) {
+                uploadArea.innerHTML = `
+                    <div class="upload-content">
+                        <div class="upload-icon">📱</div>
+                        <div>點擊上傳QR Code圖片</div>
+                        <div class="upload-hint">支援 JPG, PNG, GIF 格式</div>
+                    </div>
+                `;
+            }
+    
             // 重置狀態
             const statusMessages = {
                 manual: '✏️ 手動輸入模式',
                 qrcode: '📱 QR Code掃描模式 - 請上傳圖片'
             };
-            
+    
             updateStatus(statusMessages[currentInputMethod] || '✏️ 手動輸入模式', '');
-            
         }
 
         function isValidHRVData(inputValue) {
@@ -862,8 +1046,8 @@ function setupDragAndDrop() {
                 }
                 
                 displayParameters(params);
-                const analysis = analyzeHRV(params);
-                displayAnalysis(analysis);
+                const hrvGrading = performHRVGrading(params);
+                displayAnalysis(hrvGrading);
                 
                 document.getElementById('results').classList.add('show');
                 document.getElementById('status').textContent = '✅ 分析完成！';
@@ -874,26 +1058,173 @@ function setupDragAndDrop() {
             }
         }
 
-        function analyzeHRV(params) {
-            let status = 'normal';
-            let indicators = [];
-            
-            Object.entries(params).forEach(([key, value]) => {
-                const range = systemSettings.parameterRanges[key];
-                if (range && (value < range.min || value > range.max)) {
-                    indicators.push(`${key}超出正常範圍`);
+        function performHRVGrading(params) {
+            if (!systemSettings.hrvGrading.enabled) return null;
+
+            const rmssd = params.RMSSD || params.rMSSD;
+            if (!rmssd) return null;
+
+            // 第一步：找到所有符合rMSSD條件的級別
+            const matchingGrades = [];
+    
+            Object.entries(systemSettings.hrvGrading.grades).forEach(([gradeId, grade]) => {
+                let matches = false;
+        
+                // 根據您的說明修正邊界判斷
+                if (gradeId === 'grade1') {
+                    matches = rmssd > 75;
+                } else if (gradeId === 'grade2') {
+                    matches = rmssd > 45 && rmssd <= 75;
+                } else if (gradeId === 'grade3') {
+                    matches = rmssd > 25 && rmssd <= 45;
+                } else if (gradeId === 'grade4') {
+                    matches = rmssd > 19 && rmssd <= 30;
+                } else if (gradeId === 'grade5') {
+                    matches = rmssd > 12 && rmssd <= 19;
+                } else if (gradeId === 'grade6') {
+                    matches = rmssd <= 12;
+                }
+        
+                if (matches) {
+                    matchingGrades.push({ 
+                        id: gradeId, 
+                        ...grade, 
+                        gradeIndex: parseInt(gradeId.replace('grade', ''))
+                    });
                 }
             });
-            
-            if (params.LFHF > 2.5) {
-                status = 'type1';
-            } else if (params.LFHF < 0.5) {
-                status = 'type2';
-            } else if (indicators.length >= 3) {
-                status = 'type3';
+
+            if (matchingGrades.length === 0) return null;
+
+            // rMSSD主要分級：如果有多個匹配，選擇第一個作為primary，其他作為overlapping
+            matchingGrades.sort((a, b) => a.gradeIndex - b.gradeIndex); // 按級別排序
+            const primaryGrade = matchingGrades[0];
+
+            // rMSSD重疊情況：顯示所有匹配的級別
+            const overlappingInfo = [];
+            if (matchingGrades.length > 1) {
+                const otherGrades = matchingGrades.slice(1);
+                otherGrades.forEach(grade => {
+                    overlappingInfo.push(`同時符合 ${grade.name}`);
+                });
             }
+
+            // 第二步：pNN50和LFHF補充說明 - 選擇較嚴重的級別
+            const supplementaryInfo = [...overlappingInfo];
+
+            if (params.pNN50 !== undefined) {
+                const pnn50Grade = findParameterGrade('pNN50', params.pNN50); // 這個函數會選擇最嚴重的
+                if (pnn50Grade && !matchingGrades.some(g => g.id === pnn50Grade.id)) {
+                    supplementaryInfo.push(`pNN50 指向 ${pnn50Grade.name}`);
+                }
+            }
+
+            if (params.LFHF !== undefined) {
+                const lfhfGrade = findParameterGrade('LFHF', params.LFHF); // 這個函數會選擇最嚴重的
+                if (lfhfGrade && !matchingGrades.some(g => g.id === lfhfGrade.id)) {
+                    supplementaryInfo.push(`LF/HF 比值指向 ${lfhfGrade.name}`);
+                }
+            }
+
+            return {
+                primary: primaryGrade,
+                supplementary: supplementaryInfo,
+                confidence: calculateGradingConfidence(params, primaryGrade),
+                allMatches: matchingGrades
+            };
+        }
+
+        function findParameterGrade(paramName, value) {
+            const matchingGrades = [];
+    
+            Object.entries(systemSettings.hrvGrading.grades).forEach(([gradeId, grade]) => {
+                const condition = grade.conditions[paramName];
+                if (!condition) return;
+        
+                let matches = false;
+        
+                if (paramName === 'pNN50') {
+                    // pNN50邊界判斷邏輯（選擇較嚴重的）
+                    if (gradeId === 'grade1') {
+                        matches = value > 30;
+                    } else if (gradeId === 'grade2') {
+                        matches = value > 15 && value <= 30;
+                    } else if (gradeId === 'grade3') {
+                        matches = value > 10 && value <= 20;
+                    } else if (gradeId === 'grade4') {
+                        matches = value > 6 && value <= 10;
+                    } else if (gradeId === 'grade5') {
+                        matches = value > 3 && value <= 6;
+                    } else if (gradeId === 'grade6') {
+                        matches = value <= 3;
+                    }
+                } else if (paramName === 'LFHF') {
+                    // LFHF邊界判斷邏輯（選擇較嚴重的）
+                    if (gradeId === 'grade1') {
+                        matches = value > 0.3 && value <= 0.8;
+                    } else if (gradeId === 'grade2') {
+                        matches = value > 0.8 && value <= 2.0;
+                    } else if (gradeId === 'grade3') {
+                        matches = value > 1.5 && value <= 3.0;
+                    } else if (gradeId === 'grade4') {
+                        matches = value > 2.5 && value <= 4.0;
+                    } else if (gradeId === 'grade5') {
+                        matches = value > 3.5 && value <= 6.0;
+                    } else if (gradeId === 'grade6') {
+                        matches = value > 6.0 || value <= 0.3;
+                    }
+                } else {
+                    // 其他參數保持原來的邏輯
+                    if (Array.isArray(condition)) {
+                        for (const range of condition) {
+                            if (value >= range.min && value <= range.max) {
+                                matches = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        matches = value >= condition.min && value <= condition.max;
+                    }
+                }
+        
+                if (matches) {
+                    matchingGrades.push({ id: gradeId, ...grade, gradeIndex: parseInt(gradeId.replace('grade', '')) });
+                }
+            });
+
+            // pNN50和LFHF：選擇較嚴重的級別（索引較大的）
+            if (matchingGrades.length > 0) {
+                matchingGrades.sort((a, b) => b.gradeIndex - a.gradeIndex);
+                return matchingGrades[0];
+            }
+    
+            return null;
+        }
+
+        function calculateGradingConfidence(params, primaryGrade) {
+            let matchingParams = 0;
+            let totalParams = 0;
             
-            return { status, indicators };
+            Object.entries(primaryGrade.conditions).forEach(([param, condition]) => {
+                if (params[param] !== undefined) {
+                    totalParams++;
+            
+                    if (Array.isArray(condition)) {
+                        for (const range of condition) {
+                            if (params[param] >= range.min && params[param] <= range.max) {
+                                matchingParams++;
+                                break;
+                            }
+                        }
+                    } else {
+                        if (params[param] >= condition.min && params[param] <= condition.max) {
+                            matchingParams++;
+                        }
+                    }
+                }
+            });
+    
+            return totalParams > 0 ? (matchingParams / totalParams) * 100 : 0;
         }
 
         function displayParameters(params) {
@@ -924,21 +1255,30 @@ function setupDragAndDrop() {
             });
         }
 
-        function displayAnalysis(analysis) {
+        function displayAnalysis(hrvGrading = null) {
             const resultDiv = document.getElementById('analysisResult');
             const recommendationsDiv = document.getElementById('recommendationsList');
-            
-            const rule = systemSettings.classificationRules[analysis.status];
-            let statusText = rule ? rule.name : '正常範圍';
-            
-            resultDiv.innerHTML = `
-                <h3>📊 ${statusText}</h3>
-                <p>基於您的HRV參數分析結果</p>
-            `;
-            
+
+            if (hrvGrading && hrvGrading.primary) {
+                resultDiv.innerHTML = `
+                    <h3 style="color: ${hrvGrading.primary.color}; margin-bottom: 15px;">${hrvGrading.primary.name}</h3>
+                    <p style="margin-bottom: 8px;"><strong>主要依據：</strong>rMSSD 值判斷</p>
+                    ${hrvGrading.supplementary.length > 0 ? `<p style="font-size: 0.9em; color: #6b7280; margin-bottom: 8px;"><strong>補充說明：</strong>${hrvGrading.supplementary.join('、')}</p>` : ''}
+                `;
+        
+                resultDiv.style.background = `${hrvGrading.primary.color}20`;
+                resultDiv.style.borderLeft = `4px solid ${hrvGrading.primary.color}`;
+            } else {
+                resultDiv.innerHTML = `
+                    <h3 style="color: #dc2626;">無法進行HRV分級</h3>
+                    <p>請確認輸入的數據是否正確</p>
+                `;
+                resultDiv.style.background = '#fef2f2';
+                resultDiv.style.borderLeft = '4px solid #dc2626';
+            }
+
             recommendationsDiv.innerHTML = '';
-            
-            const recommendations = getRecommendations(analysis);
+            const recommendations = getRecommendations(hrvGrading);
             recommendations.forEach(rec => {
                 const li = document.createElement('li');
                 li.textContent = rec;
@@ -946,33 +1286,156 @@ function setupDragAndDrop() {
             });
         }
 
-        function getRecommendations(analysis) {
+        function getRecommendations(hrvGrading = null) {
             const recommendations = [];
-            
-            if (analysis.indicators.length > 0) {
-                recommendations.push(`檢測發現：${analysis.indicators.join('、')}`);
+
+            // 添加HRV分級的建議
+            if (hrvGrading && hrvGrading.primary && hrvGrading.primary.recommendations) {
+                hrvGrading.primary.recommendations.forEach(rec => {
+                    if (rec.trim()) recommendations.push(rec);
+                });
             }
-            
-            const rule = systemSettings.classificationRules[analysis.status];
-            if (rule) {
-                if (rule.supplements && rule.supplements.length > 0) {
-                    recommendations.push(`建議營養品：${rule.supplements.join(' 或 ')}`);
-                }
-                
-                if (rule.lifestyle && rule.lifestyle.length > 0) {
-                    rule.lifestyle.forEach(advice => {
-                        recommendations.push(advice);
-                    });
-                }
-            }
-            
+
+            // 最後固定添加專業醫療建議
             recommendations.push('建議諮詢專業醫療人員');
             return recommendations;
         }
 
         function updateSettingsUI() {
             updateParameterRangesUI();
-            updateClassificationUI();
+            updateHRVGradingUI();
+        }
+
+        function updateHRVGradingUI() {
+            const classificationContainer = document.getElementById('classificationList');
+
+            // 清空原有的分類列表內容
+            classificationContainer.innerHTML = '';
+
+            // 創建HRV分級設定來取代原有的分類列表
+            const hrvGradingSection = document.createElement('div');
+            hrvGradingSection.className = 'hrv-grading-section';
+            hrvGradingSection.innerHTML = `
+                <div id="hrvGradesList"></div>
+            `;
+
+            // 將HRV分級設定放入分類容器中
+            classificationContainer.appendChild(hrvGradingSection);
+
+            // 更新分級列表
+            updateHRVGradesList();
+        }
+
+        function updateHRVGradesList() {
+            const container = document.getElementById('hrvGradesList');
+            if (!container) return;
+    
+            container.innerHTML = '';
+    
+            Object.entries(systemSettings.hrvGrading.grades).forEach(([gradeId, grade], index) => {
+                const gradeItem = document.createElement('div');
+                gradeItem.className = 'classification-item hrv-grade-item';
+                gradeItem.style.borderLeftColor = grade.color;
+        
+                gradeItem.innerHTML = `
+                    <div class="classification-header">
+                        <div><strong>級別 ${index + 1}</strong></div>
+                        <div class="grade-color" style="background-color: ${grade.color}; width: 20px; height: 20px; border-radius: 50%;"></div>
+                    </div>
+            
+                    <div class="form-group">
+                        <label>級別名稱：</label>
+                        <input type="text" class="form-input" value="${grade.name}" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>rMSSD 判斷範圍 (主要依據)：</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" class="form-input" value="${grade.rmssdRange.min}" 
+                                onchange="updateHRVGradeRange('${gradeId}', 'min', this.value)" style="flex: 1;">
+                            <span>-</span>
+                            <input type="number" class="form-input" value="${grade.rmssdRange.max === Infinity ? '' : grade.rmssdRange.max}" 
+                                placeholder="無上限" onchange="updateHRVGradeRange('${gradeId}', 'max', this.value)" style="flex: 1;">
+                            <span>ms</span>
+                        </div>
+                        <div style="font-size: 0.8em; color: #6b7280; margin-top: 5px;">
+                            注意：範圍判斷為 ${gradeId === 'grade1' ? '>最小值' : gradeId === 'grade6' ? '≤最大值' : '最小值 < 值 ≤ 最大值'}
+                        </div>
+                    </div>
+            
+                    <div class="form-group">
+                        <label>其他參數範圍 (補充判斷)：</label>
+                        <div class="parameter-ranges">
+                            ${Object.entries(grade.conditions).map(([param, range]) => {
+                                if (param === 'LFHF' && Array.isArray(range)) {
+                                return `
+                                    <div class="param-range">
+                                        <strong>${param}:</strong> 
+                                        ${range.map(r => `${r.min === 0 ? '<' : ''}${r.min === Infinity ? '>' : r.min}${r.max === Infinity ? '+' : '-' + r.max}`).join(' 或 ')}
+                                    </div>
+                                `;
+                                } else {
+                                    return `
+                                        <div class="param-range">
+                                            <strong>${param}:</strong> ${range.min}${range.max === Infinity ? '+' : '-' + range.max}
+                                        </div>
+                                    `;
+                                }
+                            }).join('')}
+                        </div>
+                    </div>
+            
+                    <div class="form-group">
+                        <label>建議事項：</label>
+                        <div class="suggestions-list">
+                            ${grade.recommendations.map((rec, recIndex) => `
+                                <div class="suggestion-item">
+                                    <input type="text" class="suggestion-input" value="${rec}" 
+                                       onchange="updateHRVGradeRecommendation('${gradeId}', ${recIndex}, this.value)">
+                                    <button class="remove-btn" onclick="removeHRVGradeRecommendation('${gradeId}', ${recIndex})">移除</button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="add-btn" onclick="addHRVGradeRecommendation('${gradeId}')">+ 新增建議</button>
+                    </div>
+                `;
+        
+                container.appendChild(gradeItem);
+            });
+        }
+
+        function updateHRVGradeRange(gradeId, type, value) {
+            const grade = systemSettings.hrvGrading.grades[gradeId];
+            if (grade) {
+                if (type === 'min') {
+                    grade.rmssdRange.min = parseFloat(value) || 0;
+                } else {
+                    grade.rmssdRange.max = value === '' ? Infinity : parseFloat(value);
+                }
+            }
+        }
+
+        function updateHRVGradeRecommendation(gradeId, index, value) {
+            const grade = systemSettings.hrvGrading.grades[gradeId];
+            if (grade && grade.recommendations[index] !== undefined) {
+                grade.recommendations[index] = value;
+            }
+        }
+
+        function addHRVGradeRecommendation(gradeId) {
+            const grade = systemSettings.hrvGrading.grades[gradeId];
+            if (grade) {
+                grade.recommendations.push('');
+                updateHRVGradesList();
+            }
+        }
+
+        function removeHRVGradeRecommendation(gradeId, index) {
+            const grade = systemSettings.hrvGrading.grades[gradeId];
+            if (grade && index >= 0) {
+                grade.recommendations.splice(index, 1);
+                updateHRVGradesList();
+            }
         }
 
         function updateParameterRangesUI() {
