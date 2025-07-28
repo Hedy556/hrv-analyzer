@@ -112,9 +112,9 @@
         .param-card h4 { color: #374151; margin-bottom: 10px; }
         .param-card .value { font-size: 1.8em; font-weight: bold; color: #111827; }
         .param-card .unit { font-size: 0.8em; color: #6b7280; }
-        .param-card.normal .value { color: #10b981; }  /* 綠色文字 */
-        .param-card.warning .value { color: #f59e0b; } /* 黃色文字 */
-        .param-card.danger .value { color: #ef4444; }  /* 紅色文字 */
+        .param-card.normal .value { color: #599CBF; }  /* 綠色文字 */
+        .param-card.warning .value { color: #B29868; } /* 黃色文字 */
+        .param-card.danger .value { color: #FF7B5E; }  /* 紅色文字 */
         
         .analysis-result {
             background: #f3f4f6;
@@ -542,7 +542,7 @@
 }
 
 .hrv-grade-item {
-    border-left: 4px solid #6366f1 !important;
+    border-left: 4px solid #6366f1;
 }
 
 .parameter-ranges {
@@ -722,10 +722,10 @@
                         name: '極佳恢復狀況',
                         rmssdRange: { min: 75, max: Infinity },
                         conditions: {
-                             LFHF: { min: 0.3, max: 0.8 },
-                             pNN50: { min: 30, max: Infinity }
+                            LFHF: { min: 0.3, max: 0.8 },
+                            pNN50: { min: 30, max: Infinity }
                         },
-                        color: '#10b981',
+                        color: '#599CBF',  // 改為深灰藍色
                         recommendations: ['維持現有生活型態', '定期監測保持狀態']
                     },
                     grade2: {
@@ -734,8 +734,8 @@
                         conditions: {
                             LFHF: { min: 0.8, max: 2.0 },
                             pNN50: { min: 15, max: 30 }
-                         },
-                        color: '#22c55e',
+                        },
+                        color: '#82CEDB',  // 改為灰藍色
                         recommendations: ['保持規律運動', '維持良好睡眠品質']
                     },
                     grade3: {
@@ -745,7 +745,7 @@
                             LFHF: { min: 1.5, max: 3.0 },
                             pNN50: { min: 10, max: 20 }
                         },
-                        color: '#eab308',
+                        color: '#B29868',  // 改為卡其色
                         recommendations: ['適度休息調整', '注意壓力管理', '改善睡眠品質']
                     },
                     grade4: {
@@ -755,7 +755,7 @@
                             LFHF: { min: 2.5, max: 4.0 },
                             pNN50: { min: 6, max: 10 }
                         },
-                        color: '#f59e0b',
+                        color: '#E2D5BC',  // 改為土色
                         recommendations: ['需要充分休息', '建議減少工作壓力', '進行放鬆訓練']
                     },
                     grade5: {
@@ -765,7 +765,7 @@
                             LFHF: { min: 3.5, max: 6.0 },
                             pNN50: { min: 3, max: 6 }
                         },
-                        color: '#ef4444',
+                        color: '#FFB4A3',  // 改為淺粉色
                         recommendations: ['立即休息調整', '尋求專業協助', '重新評估生活型態']
                     },
                     grade6: {
@@ -775,7 +775,7 @@
                             LFHF: [{ min: 6.0, max: Infinity }, { min: 0, max: 0.3 }],
                             pNN50: { min: 0, max: 3 }
                         },
-                        color: '#dc2626',
+                        color: '#FF7B5E',  // 改為珊瑚紅色
                         recommendations: ['緊急休息', '立即就醫諮詢', '全面生活型態調整']
                     }
                 }
