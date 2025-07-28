@@ -72,8 +72,8 @@
             font-size: 1em;
         }
         .scan-btn:hover { background: #4b5563; }
-        .demo-btn { background: #10b981; }
-        .demo-btn:hover { background: #059669; }
+        .demo-btn { background: #A0AFB7; }
+        .demo-btn:hover { background: #6A818D; }
         
         #status {
             margin-top: 15px;
@@ -184,13 +184,6 @@
             padding: 20px;
             margin-bottom: 20px;
         }
-        .classification-item.type1 { border-left: 4px solid #f59e0b; }
-        .classification-item.type2 { border-left: 4px solid #f59e0b; }
-        .classification-item.type3 { border-left: 4px solid #ef4444; }
-        .classification-item.normal { border-left: 4px solid #10b981; }
-        .classification-item.custom1,
-        .classification-item.custom2,
-        .classification-item.custom3 { border-left: 4px solid #6366f1; }
         
         .classification-header {
             display: flex;
@@ -280,9 +273,10 @@
             transition: all 0.3s;
             border-radius: 8px;
         }
-        .method-tab.active { background: #10b981; color: white; }
+        .method-tab.active { background: #4C8CC2; color: white; }
         .method-tab:hover { background: #e5e7eb; }
-        .method-tab.active:hover { background: #059669; }
+        .method-tab.active:hover { background: #28689c
+; }
 
         .input-section { display: none; margin: 15px 0; }
         .input-section.active { display: block; }
@@ -298,12 +292,12 @@
             margin: 15px 0;
         }
         .upload-area:hover {
-            border-color: #10b981;
-            background: #f0fdf4;
+            border-color: #6FA2CE;
+            background: #ebebeb;
         }
         .upload-area.dragover {
-            border-color: #10b981;
-            background: #dcfce7;
+            border-color: #6FA2CE;
+            background: #ebebeb;
         }
 
         .upload-content {
@@ -685,36 +679,7 @@
                 'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' },
                 'SDNN': { min: 50, max: 150, description: '心跳變異標準差' }
             },
-            classificationRules: {
-                type1: { 
-                    name: '類型一 - 交感神經過度活躍',
-                    description: '個性容易緊張、工作壓力很大、生活步調緊湊的人',
-                    condition: 'LFHF > 2.5',
-                    supplements: ['穀維素', 'GABA'],
-                    lifestyle: ['放鬆練習', '減少咖啡因', '深呼吸訓練']
-                },
-                type2: { 
-                    name: '類型二 - 副交感神經過度活躍',
-                    description: '活動量不足、缺乏運動的族群',
-                    condition: 'LFHF < 0.5',
-                    supplements: ['唐辛子', '人蔘皂甘'],
-                    lifestyle: ['適度運動', '規律作息', '提升活力']
-                },
-                type3: { 
-                    name: '類型三 - 多項指標異常',
-                    description: '綜合性問題，需要全面性調理',
-                    condition: '3個以上參數超出正常範圍',
-                    supplements: ['唐辛子+穀維素', '人蔘皂甘+穀維素'],
-                    lifestyle: ['就醫諮詢', '密切監控', '綜合調理']
-                },
-                normal: { 
-                    name: '正常範圍',
-                    description: '各項指標均在健康範圍內',
-                    condition: '所有參數在正常範圍內',
-                    supplements: ['維持現狀'],
-                    lifestyle: ['保持良好習慣', '定期檢測']
-                }
-            },
+
             hrvGrading: {
                 enabled: true,
                 grades: {
@@ -1477,165 +1442,6 @@ function setupDragAndDrop() {
     });
 }
 
-        function updateClassificationUI() {
-            const container = document.getElementById('classificationList');
-            container.innerHTML = '';
-            
-            Object.entries(systemSettings.classificationRules).forEach(([type, rule], index) => {
-                const item = document.createElement('div');
-                item.className = `classification-item ${type}`;
-                item.dataset.type = type;
-                
-                item.innerHTML = `
-                    <div class="classification-header">
-                        <div><strong>分類 ${index + 1}</strong></div>
-                        <button class="delete-btn" onclick="deleteClassification('${type}')">刪除</button>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>分類名稱：</label>
-                        <input type="text" class="form-input" value="${rule.name}" 
-                               onchange="updateClassificationField('${type}', 'name', this.value)">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>描述（代表的狀況）：</label>
-                        <textarea class="form-input form-textarea" 
-                                  onchange="updateClassificationField('${type}', 'description', this.value)"
-                                  placeholder="例如：個性容易緊張、工作壓力很大、生活步調緊湊的人">${rule.description || ''}</textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>複合分類基準：</label>
-                        <input type="text" class="form-input" value="${rule.condition}" 
-                               onchange="updateClassificationField('${type}', 'condition', this.value)"
-                               placeholder="例如：LFHF > 2.5">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>營養品補充建議：</label>
-                        <div class="suggestions-list" data-type="${type}" data-list="supplements">
-                            ${rule.supplements.map((item, itemIndex) => `
-                                <div class="suggestion-item">
-                                    <input type="text" class="suggestion-input" value="${item}" 
-                                           onchange="updateSuggestionItem('${type}', 'supplements', ${itemIndex}, this.value)">
-                                    <button class="remove-btn" onclick="removeSuggestionItem('${type}', 'supplements', ${itemIndex})">移除</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <button class="add-btn" onclick="addSuggestionItem('${type}', 'supplements')">+ 新增營養品</button>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>生活改善建議：</label>
-                        <div class="suggestions-list" data-type="${type}" data-list="lifestyle">
-                            ${rule.lifestyle.map((item, itemIndex) => `
-                                <div class="suggestion-item">
-                                    <input type="text" class="suggestion-input" value="${item}" 
-                                           onchange="updateSuggestionItem('${type}', 'lifestyle', ${itemIndex}, this.value)">
-                                    <button class="remove-btn" onclick="removeSuggestionItem('${type}', 'lifestyle', ${itemIndex})">移除</button>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <button class="add-btn" onclick="addSuggestionItem('${type}', 'lifestyle')">+ 新增建議</button>
-                    </div>
-                `;
-                
-                container.appendChild(item);
-            });
-        }
-
-        function addNewClassification() {
-            const existingTypes = Object.keys(systemSettings.classificationRules);
-            let newTypeId = 'custom1';
-            let counter = 1;
-            
-            while (existingTypes.includes(newTypeId)) {
-                counter++;
-                newTypeId = `custom${counter}`;
-            }
-            
-            systemSettings.classificationRules[newTypeId] = {
-                name: `自訂分類 ${counter}`,
-                description: '',
-                condition: '',
-                supplements: [''],
-                lifestyle: ['']
-            };
-            
-            updateClassificationUI();
-        }
-
-        function deleteClassification(type) {
-            if (confirm('確定要刪除這個分類嗎？')) {
-                delete systemSettings.classificationRules[type];
-                updateClassificationUI();
-            }
-        }
-
-        function updateClassificationField(type, field, value) {
-            if (systemSettings.classificationRules[type]) {
-                systemSettings.classificationRules[type][field] = value;
-            }
-        }
-
-        function addSuggestionItem(type, listType) {
-            const rule = systemSettings.classificationRules[type];
-            if (!rule || !rule[listType]) return;
-            
-            rule[listType].push('');
-            updateClassificationUI();
-        }
-
-        function removeSuggestionItem(type, listType, index) {
-            const rule = systemSettings.classificationRules[type];
-            if (!rule || !rule[listType] || index < 0) return;
-            
-            rule[listType].splice(index, 1);
-            updateClassificationUI();
-        }
-
-        function updateSuggestionItem(type, listType, index, value) {
-            const rule = systemSettings.classificationRules[type];
-            if (rule && rule[listType] && index >= 0) {
-                rule[listType][index] = value;
-            }
-        }
-
-
-function collectClassificationSettings() {
-    const rules = {};
-    const items = document.querySelectorAll('.classification-item[data-type]');
-    
-    items.forEach(item => {
-        const type = item.dataset.type;
-        const inputs = item.querySelectorAll('input, textarea');
-        
-        // 基本資訊
-        const nameInput = item.querySelector('input[type="text"]');
-        const descTextarea = item.querySelector('textarea');
-        const conditionInputs = item.querySelectorAll('input[type="text"]');
-        
-        // 營養品建議
-        const suppInputs = item.querySelectorAll('.suggestions-list[data-list="supplements"] input');
-        const supplements = Array.from(suppInputs).map(i => i.value.trim()).filter(v => v);
-        
-        // 生活建議
-        const lifeInputs = item.querySelectorAll('.suggestions-list[data-list="lifestyle"] input');
-        const lifestyle = Array.from(lifeInputs).map(i => i.value.trim()).filter(v => v);
-        
-        rules[type] = {
-            name: nameInput ? nameInput.value.trim() : '',
-            description: descTextarea ? descTextarea.value.trim() : '',
-            condition: conditionInputs[1] ? conditionInputs[1].value.trim() : '',
-            supplements: supplements.length > 0 ? supplements : [''],
-            lifestyle: lifestyle.length > 0 ? lifestyle : ['']
-        };
-    });
-    
-    return rules;
-}
-
 function loadSettings() {
     try {
         const savedSettings = localStorage.getItem('hrvSystemSettings');
@@ -1647,13 +1453,6 @@ function loadSettings() {
                 systemSettings.parameterRanges = {
                     ...systemSettings.parameterRanges,
                     ...parsedSettings.parameterRanges
-                };
-            }
-            
-            if (parsedSettings.classificationRules) {
-                systemSettings.classificationRules = {
-                    ...systemSettings.classificationRules,
-                    ...parsedSettings.classificationRules
                 };
             }
             
@@ -1679,10 +1478,7 @@ function loadSettings() {
                     description: inputs[2].value || ''
                 };
             });
-            const classificationRules = collectClassificationSettings();
-
             systemSettings.parameterRanges = paramRanges;
-            systemSettings.classificationRules = classificationRules;
 
                 try {
         localStorage.setItem('hrvSystemSettings', JSON.stringify(systemSettings));
@@ -1702,37 +1498,6 @@ function loadSettings() {
                     'HF': { min: 300, max: 1000, description: '高頻功率' },
                     'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' },
                     'SDNN': { min: 50, max: 150, description: '心跳變異標準差' }
-                };
-                
-                systemSettings.classificationRules = {
-                    type1: { 
-                        name: '類型一 - 交感神經過度活躍',
-                        description: '個性容易緊張、工作壓力很大、生活步調緊湊的人',
-                        condition: 'LFHF > 2.5',
-                        supplements: ['穀維素', 'GABA'],
-                        lifestyle: ['放鬆練習', '減少咖啡因', '深呼吸訓練']
-                    },
-                    type2: { 
-                        name: '類型二 - 副交感神經過度活躍',
-                        description: '活動量不足、缺乏運動的族群',
-                        condition: 'LFHF < 0.5',
-                        supplements: ['唐辛子', '人蔘皂甘'],
-                        lifestyle: ['適度運動', '規律作息', '提升活力']
-                    },
-                    type3: { 
-                        name: '類型三 - 多項指標異常',
-                        description: '綜合性問題，需要全面性調理',
-                        condition: '3個以上參數超出正常範圍',
-                        supplements: ['唐辛子+穀維素', '人蔘皂甘+穀維素'],
-                        lifestyle: ['就醫諮詢', '密切監控', '綜合調理']
-                    },
-                    normal: { 
-                        name: '正常範圍',
-                        description: '各項指標均在健康範圍內',
-                        condition: '所有參數在正常範圍內',
-                        supplements: ['維持現狀'],
-                        lifestyle: ['保持良好習慣', '定期檢測']
-                    }
                 };
                 
                 updateSettingsUI();
