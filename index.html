@@ -3,6 +3,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HRV報告掃描分析系統</title>
+    <script src="jsQR.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -118,10 +119,11 @@
         
         .analysis-result {
             background: #f3f4f6;
-            padding: 25px;
+            padding: 35px 30px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             text-align: center;
+            min-height: 120px;
         }
         .analysis-result h3 { font-size: 1.3em; margin-bottom: 10px; }
         
@@ -133,9 +135,10 @@
         .recommendations h4 { margin-bottom: 15px; color: #374151; }
         .recommendations ul { list-style: none; }
         .recommendations li {
-            padding: 10px 0;
+            padding: 8px 0;
             border-bottom: 1px solid #e5e7eb;
             color: #6b7280;
+            line-height: 1.5;
         }
         .recommendations li:before { content: "• "; color: #10b981; font-weight: bold; }
         
@@ -199,6 +202,80 @@
             cursor: pointer;
         }
         
+        /* 新增：HRV參數輸入表單樣式 */
+        .hrv-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            margin: 15px 0;
+        }
+
+        .hrv-form-header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .hrv-input-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 40px;
+            justify-content: center; /* 讓項目居中 */
+        }
+
+        .hrv-input-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            flex-wrap: wrap; 
+        }
+
+        .hrv-input-label {
+            min-width: 50px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.95em;
+        }
+
+        .hrv-input-field {
+            flex: 1;
+            padding: 10px 10px;
+            border: 2px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1em;
+            text-align: center;
+            transition: border-color 0.3s;
+            min-width: 80px;  /* 設定最小寬度避免過小 */
+            max-width: 100%;
+        }
+
+        .hrv-input-field:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .hrv-input-unit {
+            min-width: 35px;
+            color: #6b7280;
+            font-size: 0.9em;
+            text-align: left;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #6b7280; }
         .form-input {
@@ -352,7 +429,134 @@
             color: #dc2626;
         }
     
-        /* 手機響應式設計 */
+        /* 十字象限圖樣式 - 完全響應式版本 */
+        .chart-container-responsive {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .quadrant-chart {
+            width: min(85vw, 400px);
+            height: min(85vw, 400px);
+            position: relative;
+            border-radius: 15px;
+            overflow: visible;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            margin: 50px auto;
+        }
+
+        .quadrant-background {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            border-radius: 15px;
+            background: linear-gradient(45deg, 
+                #C1CDD3 0%, #C1CDD3 20%, #D2D5D3 33%, #E2DDD4 40%, 
+                #E2DDD4 60%, #F1DBD2 66%, #FFD9D1 80%, #FFD9D1 100%
+            );
+        }
+
+        /* 座標軸 */
+        .axis {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 5;
+        }
+
+        .axis-horizontal {
+            width: 100%;
+            height: 2px;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+
+        .axis-vertical {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+
+        /* 軸標籤 */
+        .y-axis-label {
+            position: absolute;
+            right: calc(100% - 10.7px);
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            font-size: 18.7px;
+            font-weight: 600;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .x-axis-label {
+            position: absolute;
+            bottom: -53px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18.7px;
+            font-weight: 600;
+            color: #374151;
+            text-align: center;
+        }
+
+        /* 數據點 */
+        .data-point {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #4C8CC2;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 2px 6px rgba(76, 140, 194, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .data-point.primary {
+            animation: pulse 2s infinite;
+        }
+
+        .data-point.secondary {
+            opacity: 0.5;
+            transform: translate(-50%, -50%) scale(0.8);
+            border-color: #94a3b8;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { 
+                box-shadow: 0 2px 6px rgba(76, 140, 194, 0.3), 0 0 0 0 rgba(76, 140, 194, 0.7); 
+            }
+            70% { 
+                box-shadow: 0 2px 6px rgba(76, 140, 194, 0.3), 0 0 0 10px rgba(76, 140, 194, 0); 
+            }
+            100% { 
+                box-shadow: 0 2px 6px rgba(76, 140, 194, 0.3), 0 0 0 0 rgba(76, 140, 194, 0); 
+            }       
+        }
+        
+        .analysis-result .chart-container-responsive {
+            width: 100%;
+            max-width: 350px;
+            margin: 50px auto;
+        }
+
+        .analysis-result .quadrant-chart {
+            width: min(60vw, 280px);
+            height: min(60vw, 280px);
+            margin: 15px auto;
+        }
+        
+/* 手機響應式設計 */
 @media (max-width: 768px) {
     .container {
         padding: 10px;
@@ -428,7 +632,6 @@
         outline: none;
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
-}
     
     .range-input-group label {
         font-weight: bold;
@@ -482,6 +685,100 @@
         padding: 10px;
     }
 
+    /* 手機版HRV輸入表單 */
+    .hrv-input-grid {
+        display: grid !important;
+        grid-template-columns: 1fr !important; /* 強制單列 */
+        gap: 10px !important;
+        margin-bottom: 20px;
+    }
+
+    .hrv-input-item {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        padding: 8px !important;
+        gap: 6px !important;
+        background: #f8fafc;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        width: 100%;
+        min-width: 0; /* 重要：允許收縮 */
+    }
+
+    .hrv-input-label {
+        min-width: 45px !important;
+        font-weight: 600;
+        color: #374151;
+        font-size: 0.85em !important;
+        flex-shrink: 0;
+    }
+
+    .hrv-input-field {
+        flex: 1 !important;
+        padding: 6px !important;
+        border: 2px solid #d1d5db;
+        border-radius: 4px;
+        font-size: 0.9em !important;
+        text-align: center;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+
+    .hrv-input-unit {
+        min-width: 25px !important;
+        color: #6b7280;
+        font-size: 0.8em !important;
+        text-align: left;
+        flex-shrink: 0;
+    }
+
+    .chart-container-responsive {
+        max-width: 95vw;
+        margin: 15px auto;
+    }
+    
+    .quadrant-chart {
+        width: min(85vw, 300px);
+        height: min(85vw, 300px);
+        margin: 40px auto;
+    }
+    
+    .y-axis-label {
+        font-size: 14px;
+        right: calc(100% - 8px);
+    }
+    
+    .x-axis-label {
+        font-size: 14px;
+        bottom: -40px;
+    }
+    
+    .data-point {
+        width: 14px;
+        height: 14px;
+        border-width: 2px;
+    }
+
+    .analysis-result .chart-container-responsive {
+        max-width: 90vw;
+        margin: 12px auto;
+    }
+    
+    .analysis-result .quadrant-chart {
+        width: min(65vw, 220px);
+        height: min(65vw, 220px);
+        margin: 15px auto;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+    .hrv-input-field {
+        min-width: 120px;
+        max-width: 180px;
+    }
+}
+
 @media (max-width: 480px) {
     .header h1 {
         font-size: 1.5em;
@@ -499,6 +796,60 @@
     .scan-section {
         padding: 15px;
     }
+
+    .hrv-input-label {
+        min-width: 50px;
+        font-size: 0.85em;
+    }
+
+    .hrv-input-field {
+        font-size: 0.85em !important;
+        padding: 5px !important;
+    }
+
+    .hrv-input-unit {
+        min-width: 35px;
+        font-size: 0.8em;
+    }
+
+    .chart-container-responsive {
+        max-width: 95vw;
+    }
+    
+    .quadrant-chart {
+        width: min(85vw, 250px);
+        height: min(85vw, 250px);
+        margin: 30px auto;
+    }
+    
+    .y-axis-label, .x-axis-label {
+        font-size: 11.7px;
+    }
+    
+    .y-axis-label {
+        right: calc(100% - 6.7px);
+    }
+    
+    .x-axis-label {
+        bottom: -33px;
+    }
+
+    .data-point {
+        width: 12px;
+        height: 12px;
+        border-width: 2px;
+    }
+
+    .analysis-result .chart-container-responsive {
+        max-width: 95vw;
+    }
+    
+    .analysis-result .quadrant-chart {
+        width: min(70vw, 180px);
+        height: min(70vw, 180px);
+        margin: 10px auto;
+    }
+
 }
 
 /* 在這裡新增HRV分級相關的CSS */
@@ -599,9 +950,45 @@
 
                 <!-- 手動輸入區域 -->
                 <div id="manual-input" class="input-section active">
-                    <label>請輸入HRV數據：</label>
-                    <input type="text" id="barcodeInput" class="barcode-input" 
-                           placeholder="範例：RMSSD=52.4&pNN50=30&LF=615.2&HF=525.8&LFHF=1.2&SDNN=68.3">
+                    <input type="text" id="barcodeInput" style="display: none;">
+
+                    <div class="hrv-form">
+                        <div class="hrv-form-header">
+                            請輸入各項HRV參數數值
+                        </div>
+                        <div class="hrv-input-grid">
+                            <div class="hrv-input-item">
+                                <label class="hrv-input-label">SDNN</label>
+                                <input type="number" class="hrv-input-field" id="input-SDNN" step="0.1" placeholder="請輸入">
+                                <span class="hrv-input-unit">ms</span>
+                            </div>
+                            <div class="hrv-input-item">
+                                <label class="hrv-input-label">rMSSD</label>
+                                <input type="number" class="hrv-input-field" id="input-RMSSD" step="0.1" placeholder="請輸入">
+                                <span class="hrv-input-unit">ms</span>
+                            </div>
+                            <div class="hrv-input-item">
+                                <label class="hrv-input-label">LF</label>
+                                <input type="number" class="hrv-input-field" id="input-LF" step="0.1" placeholder="請輸入">
+                                <span class="hrv-input-unit">ms²</span>
+                            </div>
+                            <div class="hrv-input-item">
+                                <label class="hrv-input-label">HF</label>
+                                <input type="number" class="hrv-input-field" id="input-HF" step="0.1" placeholder="請輸入">
+                                <span class="hrv-input-unit">ms²</span>
+                            </div>
+                            <div class="hrv-input-item">
+                                <label class="hrv-input-label">LFHF</label>
+                                <input type="number" class="hrv-input-field" id="input-LFHF" step="0.1" placeholder="請輸入">
+                                <span class="hrv-input-unit"></span>
+                            </div>
+                            <div class="hrv-input-item">
+                                <label class="hrv-input-label">pNN50</label>
+                                <input type="number" class="hrv-input-field" id="input-pNN50" step="0.1" placeholder="請輸入">
+                                <span class="hrv-input-unit">%</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- QR Code上傳區域 -->
@@ -620,15 +1007,17 @@
 
                 <div id="status">✏️ 手動輸入模式</div>
                 
-                <button class="scan-btn" onclick="analyzeData()">🔍 分析報告</button>
-                <button class="scan-btn demo-btn" onclick="loadDemo()">📋 載入示範數據</button>
-                <button class="scan-btn" onclick="clearInput()">🗑️ 清除</button>
+                <div class="form-actions">
+                    <button class="scan-btn" onclick="analyzeData()">🔍 分析報告</button>
+                    <button class="scan-btn demo-btn" onclick="loadDemo()">📋 載入示範數據</button>
+                    <button class="scan-btn" onclick="clearInput()">🗑️ 清除</button>
+                </div>
             </div>
 
             <div id="results" class="results">
                 <div class="result-header">
                     <h2 style="margin-bottom: 20px; line-height: 1.1;">📊 分析結果</h2>
-        <p style="margin-bottom: 25px; line-height: 1;">基於您的HRV參數進行的自律神經功能評估</p>
+                    <p style="margin-bottom: 25px; line-height: 1;">基於您的HRV參數進行的自律神經功能評估</p>
                 </div>
                 <div id="parameters" class="parameters"></div>
                 <div id="analysisResult" class="analysis-result"></div>
@@ -690,8 +1079,8 @@
                             LFHF: { min: 0.3, max: 0.8 },
                             pNN50: { min: 30, max: Infinity }
                         },
-                        color: '#599CBF',  // 改為深灰藍色
-                        recommendations: ['維持現有生活型態', '定期監測保持狀態']
+                        color: '#599CBF',
+                        recommendations: ['均衡營養：涵蓋水溶／脂溶性多種維他命及重要礦物質。', '細胞修復：加強對抗自由基的能力，支持組織再生。']
                     },
                     grade2: {
                         name: '良好平衡狀況',
@@ -701,7 +1090,7 @@
                             pNN50: { min: 15, max: 30 }
                         },
                         color: '#82CEDB',  // 改為灰藍色
-                        recommendations: ['保持規律運動', '維持良好睡眠品質']
+                        recommendations: ['能量支持：幫助提升日常活動所需的活力。', '基礎代謝：維持體內能量產生與消耗的平衡。']
                     },
                     grade3: {
                         name: '輕度疲勞狀態',
@@ -711,7 +1100,7 @@
                             pNN50: { min: 10, max: 20 }
                         },
                         color: '#B29868',  // 改為卡其色
-                        recommendations: ['適度休息調整', '注意壓力管理', '改善睡眠品質']
+                        recommendations: ['循環促進：改善微循環，讓氧氣與養分更有效地運送至全身。', '代謝協助：協助維持健康的能量生產與利用。']
                     },
                     grade4: {
                         name: '中度壓力狀態',
@@ -721,7 +1110,7 @@
                             pNN50: { min: 6, max: 10 }
                         },
                         color: '#E2D5BC',  // 改為土色
-                        recommendations: ['需要充分休息', '建議減少工作壓力', '進行放鬆訓練']
+                        recommendations: ['身心放鬆：透過舒緩效果，減少肌肉與精神緊張。', '情緒舒緩：支持心理的穩定與正向調節。']
                     },
                     grade5: {
                         name: '高度壓力狀態',
@@ -731,7 +1120,7 @@
                             pNN50: { min: 3, max: 6 }
                         },
                         color: '#FFB4A3',  // 改為淺粉色
-                        recommendations: ['立即休息調整', '尋求專業協助', '重新評估生活型態']
+                        recommendations: ['神經穩定：維持神經細胞功能與大腦健康。', '壓力適應：提升對急性或慢性壓力的耐受力。']
                     },
                     grade6: {
                         name: '極度壓力狀態',
@@ -741,7 +1130,7 @@
                             pNN50: { min: 0, max: 3 }
                         },
                         color: '#FF7B5E',  // 改為珊瑚紅色
-                        recommendations: ['緊急休息', '立即就醫諮詢', '全面生活型態調整']
+                        recommendations: ['深度修復：提供更強的細胞層級修護與整體機能恢復。', '免疫協調：同時支持免疫系統與身心健康的平衡。']
                     }
                 }
             }
@@ -760,6 +1149,8 @@
             document.querySelectorAll('.input-section').forEach(section => section.classList.remove('active'));
             document.getElementById(method + '-input').classList.add('active');
             
+            clearAllData();
+
             // 更新狀態顯示
             const statusMessages = {
                 manual: '✏️ 手動輸入模式',
@@ -770,92 +1161,196 @@
             document.getElementById('status').className = '';
         }
 
-function processQRCodeImage(input) {
-    const file = input.files[0];
-    if (!file) return;
+        // 十字象限圖相關函式
+        function calculateChartPosition(gradeIndex, lfhfValue) {
+            // X軸位置：級別1在左側，級別6在右側
+            const xPercent = 15 + ((gradeIndex - 1) / 5) * 70;
     
-    updateStatus('🔄 正在處理QR Code圖片...', 'processing');
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            // 直接更新 upload-area 的內容
-            const uploadArea = document.querySelector('#qrcode-input .upload-area');
-            if (uploadArea) {
-                uploadArea.innerHTML = `
-                    <div class="upload-content">
-                        <img src="${img.src}" alt="QR Code預覽" style="max-width: 200px; max-height: 150px; border-radius: 6px; margin-bottom: 10px;">
-                        <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px;">${file.name}</div>
-                        <div style="font-size: 0.8em; color: #9ca3af;">正在識別中...</div>
-                    </div>
-                `;
-            }
-            
-            // 模擬QR碼識別過程
-            setTimeout(() => {
-                const mockQRData = simulateQRCodeReading(file.name);
-                if (mockQRData) {
-                    document.getElementById('barcodeInput').value = mockQRData;
-                    updateStatus('✅ QR Code讀取成功！', 'success');
-                    
-                    // 更新upload-area的狀態提示
-                    if (uploadArea) {
-                        const hintDiv = uploadArea.querySelector('.upload-content div:last-child');
-                        if (hintDiv) {
-                            hintDiv.textContent = '✅ 已讀取成功，點擊更換';
-                            hintDiv.style.color = '#059669';
-                        }
-                    }
-                } else {
-                    updateStatus('❌ 無法識別QR Code，請嘗試其他圖片', 'error');
-                    
-                    // 更新upload-area的狀態提示
-                    if (uploadArea) {
-                        const hintDiv = uploadArea.querySelector('.upload-content div:last-child');
-                        if (hintDiv) {
-                            hintDiv.textContent = '❌ 無法識別，點擊重新上傳';
-                            hintDiv.style.color = '#dc2626';
-                        }
-                    }
-                }
-            }, 2000);
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
+            // Y軸位置：自律神經平衡 - 根據LFHF值的健康程度
+            let yPercent;
 
-// 在這裡新增 setupDragAndDrop 函數
-function setupDragAndDrop() {
-    const uploadAreas = document.querySelectorAll('.upload-area');
+            if (lfhfValue >= 0.3 && lfhfValue <= 0.8) {
+                // 最佳範圍：圖表中央 45-55%
+                yPercent = 50;
+            } else if (lfhfValue > 0.8 && lfhfValue <= 2.0) {
+                // 良好範圍：稍微偏離中心 35-40%
+                yPercent = 37.5;
+            } else if (lfhfValue > 1.5 && lfhfValue <= 3.0) {
+                // 輕度異常：更偏離 25-30%
+                yPercent = 27.5;
+            } else if (lfhfValue > 2.5 && lfhfValue <= 4.0) {
+                // 中度異常：明顯偏離 15-20%
+                yPercent = 17.5;
+            } else if (lfhfValue > 3.5 && lfhfValue <= 6.0) {
+                // 高度異常：接近邊緣 10%
+                yPercent = 10;
+            } else {
+                // 極度異常（>6.0 或 <0.3）：邊緣位置 5% 或 95%
+                yPercent = lfhfValue > 6.0 ? 5 : 95;
+            }
     
-    uploadAreas.forEach(area => {
-        area.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            area.classList.add('dragover');
-        });
+            return { x: xPercent, y: yPercent };
+        }
+
+        function createDataPoint(gradeResult, lfhfValue, isPrimary = true) {
+            const position = calculateChartPosition(gradeResult.gradeIndex, lfhfValue);
+    
+            const point = document.createElement('div');
+            point.className = `data-point ${isPrimary ? 'primary' : 'secondary'}`;
+            point.style.left = `${position.x}%`;
+            point.style.top = `${position.y}%`;
+    
+            // 根據風險等級設定顏色：風險越高，級別數字越大
+            if (isPrimary) {
+                // 主要級別：固定使用 #4C8CC2
+                point.style.borderColor = '#4C8CC2';
+            } else {
+                // 次要級別：使用 #4C8CC2 的50%透明度
+                point.style.borderColor = '#4C8CC2';
+                point.style.opacity = '0.5';
+            }
+    
+            point.title = `${gradeResult.name} (級別${gradeResult.gradeIndex})`;
+    
+            return point;
+        }
+
+        function updateHRVChart(params, hrvGrading) {
+            const chartContainer = document.getElementById('hrv-chart');
+            const chart = chartContainer.querySelector('.quadrant-chart');
+
+            // 清除現有數據點
+            const existingPoints = chart.querySelectorAll('.data-point');
+            existingPoints.forEach(point => point.remove());
+
+            if (hrvGrading && params.LFHF) {
+                // 顯示圖表
+                chartContainer.style.display = 'block';
         
-        area.addEventListener('dragleave', () => {
-            area.classList.remove('dragover');
-        });
+                // 添加主要分級數據點（風險最嚴重的）
+                const primaryPoint = createDataPoint(hrvGrading.primary, params.LFHF, true);
+                chart.appendChild(primaryPoint);
         
-        area.addEventListener('drop', (e) => {
-            e.preventDefault();
-            area.classList.remove('dragover');
+                // 添加次要分級數據點（風險較輕微的）
+                if (hrvGrading.secondary && hrvGrading.secondary.length > 0) {
+                    hrvGrading.secondary.forEach(grade => {
+                        const secondaryPoint = createDataPoint(grade, params.LFHF, false);
+                        chart.appendChild(secondaryPoint);
+                    });
+                }
+            } else {
+                // 隱藏圖表
+                chartContainer.style.display = 'none';
+            }
+        }
+
+        function processQRCodeImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+    
+            updateStatus('🔄 正在處理QR Code圖片...', 'processing');
+    
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // 更新預覽
+                    const uploadArea = document.querySelector('#qrcode-input .upload-area');
+                    if (uploadArea) {
+                        uploadArea.innerHTML = `
+                            <div class="upload-content">
+                                <img src="${img.src}" alt="QR Code預覽" style="max-width: 200px; max-height: 150px; border-radius: 6px; margin-bottom: 10px;">
+                                <div style="font-size: 0.9em; color: #6b7280; margin-bottom: 5px;">${file.name}</div>
+                                <div style="font-size: 0.8em; color: #9ca3af;">正在識別中...</div>
+                            </div>
+                        `;
+                    }
             
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                if (file.type.startsWith('image/')) {
-                    if (area.closest('#qrcode-input')) {
-                        processQRCodeImage({ files: [file] });
+                    // 真正的QR碼解碼
+                    decodeQRCode(img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function decodeQRCode(img) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+    
+            // 使用原始尺寸，不做縮放處理
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+    
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+    
+            const uploadArea = document.querySelector('#qrcode-input .upload-area');
+    
+            if (code) {
+                const qrData = code.data;
+                console.log('QR碼內容:', qrData);
+        
+                // 暫時跳過格式驗證，直接使用
+                document.getElementById('barcodeInput').value = qrData;
+                updateStatus('✅ QR Code讀取成功！', 'success');
+        
+                if (uploadArea) {
+                    const hintDiv = uploadArea.querySelector('.upload-content div:last-child');
+                    if (hintDiv) {
+                        hintDiv.textContent = '✅ 已讀取成功';
+                        hintDiv.style.color = '#059669';
+                    }
+                }
+            } else {
+                updateStatus('❌ 無法識別QR Code', 'error');
+        
+                if (uploadArea) {
+                    const hintDiv = uploadArea.querySelector('.upload-content div:last-child');
+                    if (hintDiv) {
+                        hintDiv.textContent = '❌ 無法識別';
+                        hintDiv.style.color = '#dc2626';
                     }
                 }
             }
-        });
-    });
-}
+        }
+
+        function isValidHRVQRData(data) {
+            const requiredParams = ['SDNN', 'RMSSD', 'LF', 'HF', 'LFHF', 'pNN50'];
+            return requiredParams.every(param => data.includes(param + '='));
+        }
+
+        // 在這裡新增 setupDragAndDrop 函數
+        function setupDragAndDrop() {
+            const uploadAreas = document.querySelectorAll('.upload-area');
+    
+            uploadAreas.forEach(area => {
+                area.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                area.classList.add('dragover');
+                });
+        
+                area.addEventListener('dragleave', () => {
+                    area.classList.remove('dragover');
+                });
+        
+                area.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    area.classList.remove('dragover');
+            
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        const file = files[0];
+                        if (file.type.startsWith('image/')) {
+                            if (area.closest('#qrcode-input')) {
+                                processQRCodeImage({ files: [file] });
+                            }
+                        }
+                    }
+                });
+            });
+        }
 
         function displayImagePreview(containerId, imageSrc, fileName) {
             // 這個函數現在由 processQRCodeImage 直接處理
@@ -863,20 +1358,21 @@ function setupDragAndDrop() {
         }
 
         function simulateQRCodeReading(fileName) {
-            // 模擬不同的QR碼識別結果
+            // 模擬不同的QR碼識別結果 - 使用你的新格式
             const mockResults = [
-                "https://hospital.com/report?RMSSD=41.7&pNN50=22&LF=685.4&HF=445.9&LFHF=1.8&SDNN=71.2",
-                "https://clinic.com/hrv-data?RMSSD=55.1&pNN50=35&LF=590.8&HF=580.3&LFHF=1.0&SDNN=82.6",
-                "https://health.com/analysis?RMSSD=33.8&pNN50=15&LF=950.2&HF=285.4&LFHF=3.3&SDNN=58.9"
+                "RMSSD=41.7&pNN50=22&LF=685.4&HF=445.9&LFHF=1.8&SDNN=71.2",
+                "SDNN=82.6&RMSSD=55.1&LF=590.8&HF=580.3&LFHF=1.0&pNN50=35",
+                "RMSSD=33.8&pNN50=15&LF=950.2&HF=285.4&LFHF=3.3&SDNN=58.9",
+                "SDNN=68.3&RMSSD=52.4&LF=615.2&HF=525.8&LFHF=1.2&pNN50=30"
             ];
-            
+    
             // 根據檔名特性決定是否成功識別
             if (fileName.toLowerCase().includes('qr') || fileName.toLowerCase().includes('code')) {
                 return mockResults[Math.floor(Math.random() * mockResults.length)];
             }
-            
-            // 80% 機率成功識別（QR碼通常更容易識別）
-            return Math.random() > 0.2 ? mockResults[Math.floor(Math.random() * mockResults.length)] : null;
+    
+            // 20% 機率成功識別（降低隨意成功的機率）
+            return Math.random() > 0.8 ? mockResults[Math.floor(Math.random() * mockResults.length)] : null;
         }
 
         function updateStatus(message, type = '') {
@@ -898,11 +1394,27 @@ function setupDragAndDrop() {
         }
 
         function loadDemo() {
-            // 載入示範數據到輸入框
-            document.getElementById('barcodeInput').value = "RMSSD=52.4&pNN50=30&LF=615.2&HF=525.8&LFHF=1.2&SDNN=68.3";
-    
-            // 只有在QR Code模式下才顯示圖片
-            if (currentInputMethod === 'qrcode') {
+            if (currentInputMethod === 'manual') {
+                // 手動輸入模式：載入到表單
+                const demoData = {
+                    'SDNN': 68.3,
+                    'RMSSD': 52.4,
+                    'LF': 615.2,
+                    'HF': 525.8,
+                    'LFHF': 1.2,
+                    'pNN50': 30
+                };
+        
+                Object.entries(demoData).forEach(([param, value]) => {
+                    const input = document.getElementById(`input-${param}`);
+                    if (input) {
+                        input.value = value;
+                    }
+                });
+            } else {
+                // QR Code模式：載入到文字框和顯示示範圖片
+                document.getElementById('barcodeInput').value = "RMSSD=52.4&pNN50=30&LF=615.2&HF=525.8&LFHF=1.2&SDNN=68.3";
+        
                 const uploadArea = document.querySelector('#qrcode-input .upload-area');
                 if (uploadArea) {
                     uploadArea.innerHTML = `
@@ -914,21 +1426,32 @@ function setupDragAndDrop() {
                     `;
                 }
             }
-    
+
             document.getElementById('status').textContent = '✅ 示範數據已載入';
             document.getElementById('status').className = 'success';
         }
 
-        function clearInput() {
+        function clearAllData() {
+            // 清除手動輸入表單
+            const inputIds = ['SDNN', 'RMSSD', 'LF', 'HF', 'LFHF', 'pNN50'];
+            inputIds.forEach(id => {
+                const input = document.getElementById(`input-${id}`);
+                if (input) {
+                    input.value = '';
+                }
+            });
+
+            // 清除QR Code相關
             document.getElementById('barcodeInput').value = '';
-            document.getElementById('results').classList.remove('show');
-    
-            // 清除QR碼圖片預覽
             document.getElementById('qrcodePreview').innerHTML = '';
-    
-            // 重置檔案輸入
             document.getElementById('qrcodeFile').value = '';
-    
+
+            // 🔥 清空狀態描述
+            const existingStateDesc = document.getElementById('stateDescription');
+            if (existingStateDesc) {
+                existingStateDesc.remove();
+            }
+
             // 重置upload-area到原始狀態
             const uploadArea = document.querySelector('#qrcode-input .upload-area');
             if (uploadArea) {
@@ -940,13 +1463,32 @@ function setupDragAndDrop() {
                     </div>
                 `;
             }
+
+            // 🔥 隱藏分析結果區塊
+            document.getElementById('results').classList.remove('show');
     
+            // 🔥 清空分析結果內容
+            document.getElementById('parameters').innerHTML = '';
+            document.getElementById('analysisResult').innerHTML = '';
+            document.getElementById('recommendationsList').innerHTML = '';
+    
+            // 🔥 隱藏圖表（如果有的話）
+            const chartContainer = document.getElementById('hrv-chart');
+            if (chartContainer) {
+                chartContainer.style.display = 'none';
+            }
+        }
+
+        function clearInput() {
+            // 直接呼叫統一的清空函式
+            clearAllData();
+
             // 重置狀態
             const statusMessages = {
                 manual: '✏️ 手動輸入模式',
                 qrcode: '📱 QR Code掃描模式 - 請上傳圖片'
             };
-    
+
             updateStatus(statusMessages[currentInputMethod] || '✏️ 手動輸入模式', '');
         }
 
@@ -984,39 +1526,67 @@ function setupDragAndDrop() {
         }
 
         function analyzeData() {
-            const inputValue = document.getElementById('barcodeInput').value.trim();
-            
-            if (!inputValue) {
-                alert('請輸入數據！');
-                return;
-            }
+            let params = {};
+    
+            // 根據當前輸入方式收集數據
+            if (currentInputMethod === 'manual') {
+                // 手動輸入模式：從表單收集數據
+                params = collectFormData();
+        
+                if (Object.keys(params).length === 0) {
+                    alert('請至少輸入一個參數！');
+                    return;
+                }
+            } else {
+                // QR Code模式：從原有的文字框讀取
+                const inputValue = document.getElementById('barcodeInput').value.trim();
+        
+                if (!inputValue) {
+                    alert('請上傳QR Code圖片或輸入數據！');
+                    return;
+                }
 
-            if (!isValidHRVData(inputValue)) {
-                alert('❌ 數據格式錯誤！');
-                return;
-            }
+                if (!isValidHRVData(inputValue)) {
+                    alert('❌ 數據格式錯誤！');
+                    return;
+                }
 
-            try {
-                const params = parseData(inputValue);
+                params = parseData(inputValue);
                 const requiredParams = ['RMSSD', 'pNN50', 'LF', 'HF', 'LFHF', 'SDNN'];
                 const missingParams = requiredParams.filter(param => !(param in params));
-                
+        
                 if (missingParams.length > 0) {
                     alert(`❌ 缺少參數：${missingParams.join(', ')}`);
                     return;
                 }
-                
+            }
+
+            try {
                 displayParameters(params);
                 const hrvGrading = performHRVGrading(params);
                 displayAnalysis(hrvGrading);
-                
+        
                 document.getElementById('results').classList.add('show');
                 document.getElementById('status').textContent = '✅ 分析完成！';
                 document.getElementById('status').className = 'success';
-                
+        
             } catch (error) {
                 alert('❌ 數據處理錯誤！');
             }
+        }
+
+        function collectFormData() {
+            const params = {};
+            const inputIds = ['SDNN', 'RMSSD', 'LF', 'HF', 'LFHF', 'pNN50'];
+    
+            inputIds.forEach(id => {
+                const input = document.getElementById(`input-${id}`);
+                if (input && input.value.trim() !== '') {
+                    params[id] = parseFloat(input.value);
+                }   
+            });
+    
+            return params;
         }
 
         function performHRVGrading(params) {
@@ -1025,13 +1595,12 @@ function setupDragAndDrop() {
             const rmssd = params.RMSSD || params.rMSSD;
             if (!rmssd) return null;
 
-            // 第一步：找到所有符合rMSSD條件的級別
+            // 找到所有符合rMSSD條件的級別
             const matchingGrades = [];
-    
+
             Object.entries(systemSettings.hrvGrading.grades).forEach(([gradeId, grade]) => {
                 let matches = false;
-        
-                // 根據您的說明修正邊界判斷
+
                 if (gradeId === 'grade1') {
                     matches = rmssd > 75;
                 } else if (gradeId === 'grade2') {
@@ -1045,7 +1614,7 @@ function setupDragAndDrop() {
                 } else if (gradeId === 'grade6') {
                     matches = rmssd <= 12;
                 }
-        
+
                 if (matches) {
                     matchingGrades.push({ 
                         id: gradeId, 
@@ -1057,39 +1626,34 @@ function setupDragAndDrop() {
 
             if (matchingGrades.length === 0) return null;
 
-            // rMSSD主要分級：如果有多個匹配，選擇第一個作為primary，其他作為overlapping
-            matchingGrades.sort((a, b) => a.gradeIndex - b.gradeIndex); // 按級別排序
+            // 選擇風險最嚴重的級別作為主要級別（級別數字越大 = 風險越高）
+            matchingGrades.sort((a, b) => b.gradeIndex - a.gradeIndex);
             const primaryGrade = matchingGrades[0];
+            const secondaryGrades = matchingGrades.slice(1);
 
-            // rMSSD重疊情況：顯示所有匹配的級別
-            const overlappingInfo = [];
-            if (matchingGrades.length > 1) {
-                const otherGrades = matchingGrades.slice(1);
-                otherGrades.forEach(grade => {
-                    overlappingInfo.push(`同時符合 ${grade.name}`);
-                });
+            // 生成補充說明
+            const supplementaryInfo = generateSupplementaryInfo(params, primaryGrade);
+
+            // 保存補充級別的完整信息
+            const supplementaryGrades = [];
+            const lfhfGrade = getLFHFGrade(params.LFHF);
+            const pnn50Grade = getPNN50Grade(params.pNN50);
+
+            if (lfhfGrade && lfhfGrade !== primaryGrade.gradeIndex) {
+                const gradeKey = `grade${lfhfGrade}`;
+                supplementaryGrades.push(systemSettings.hrvGrading.grades[gradeKey]);
             }
 
-            // 第二步：pNN50和LFHF補充說明 - 選擇較嚴重的級別
-            const supplementaryInfo = [...overlappingInfo];
-
-            if (params.pNN50 !== undefined) {
-                const pnn50Grade = findParameterGrade('pNN50', params.pNN50); // 這個函數會選擇最嚴重的
-                if (pnn50Grade && !matchingGrades.some(g => g.id === pnn50Grade.id)) {
-                    supplementaryInfo.push(`pNN50 指向 ${pnn50Grade.name}`);
-                }
-            }
-
-            if (params.LFHF !== undefined) {
-                const lfhfGrade = findParameterGrade('LFHF', params.LFHF); // 這個函數會選擇最嚴重的
-                if (lfhfGrade && !matchingGrades.some(g => g.id === lfhfGrade.id)) {
-                    supplementaryInfo.push(`LF/HF 比值指向 ${lfhfGrade.name}`);
-                }
+            if (pnn50Grade && pnn50Grade !== primaryGrade.gradeIndex && pnn50Grade !== lfhfGrade) {
+                const gradeKey = `grade${pnn50Grade}`;
+                supplementaryGrades.push(systemSettings.hrvGrading.grades[gradeKey]);
             }
 
             return {
                 primary: primaryGrade,
+                secondary: secondaryGrades,
                 supplementary: supplementaryInfo,
+                supplementaryGrades: supplementaryGrades,
                 confidence: calculateGradingConfidence(params, primaryGrade),
                 allMatches: matchingGrades
             };
@@ -1188,31 +1752,149 @@ function setupDragAndDrop() {
             return totalParams > 0 ? (matchingParams / totalParams) * 100 : 0;
         }
 
+        // 新增：生成補充說明的主要邏輯
+        function generateSupplementaryInfo(params, primaryGrade) {
+            const supplementaryInfo = [];
+    
+            // LFHF 補充判斷
+            if (params.LFHF !== undefined) {
+                if (params.LFHF < 0.3) {
+                    supplementaryInfo.push('自律神經平衡嚴重失調，副交感神經過度活躍');
+                } else if (params.LFHF > 6.0) {
+                    supplementaryInfo.push('自律神經平衡嚴重失調，交感神經過度亢奮');
+                } else if (params.LFHF > 3.5) {
+                    supplementaryInfo.push('自律神經偏向交感神經亢奮狀態');
+                } else if (params.LFHF > 2.5) {
+                    supplementaryInfo.push('自律神經平衡出現中度偏移');
+                } else if (params.LFHF > 1.5) {
+                    supplementaryInfo.push('自律神經平衡出現輕度偏移');
+                } else if (params.LFHF >= 0.3 && params.LFHF <= 0.8) {
+                    supplementaryInfo.push('自律神經平衡狀態良好');
+                }
+            }
+    
+            // pNN50 補充判斷
+            if (params.pNN50 !== undefined) {
+                if (params.pNN50 <= 3) {
+                    supplementaryInfo.push('心率變異度極低，身體恢復能力嚴重不足');
+                } else if (params.pNN50 <= 6) {
+                    supplementaryInfo.push('心率變異度偏低，身體恢復能力不佳');
+                } else if (params.pNN50 <= 10) {
+                    supplementaryInfo.push('心率變異度略低，恢復能力需要改善');
+                } else if (params.pNN50 <= 20) {
+                    supplementaryInfo.push('心率變異度中等，身體適應力尚可');
+                } else if (params.pNN50 > 30) {
+                    supplementaryInfo.push('心率變異度良好，身體恢復能力佳');
+                }
+            }  
+    
+            // 綜合判斷
+            const lfhfGrade = getLFHFGrade(params.LFHF);
+            const pnn50Grade = getPNN50Grade(params.pNN50);
+            const primaryGradeIndex = primaryGrade.gradeIndex;
+    
+            if ((lfhfGrade && lfhfGrade > primaryGradeIndex) || 
+            (pnn50Grade && pnn50Grade > primaryGradeIndex)) {
+                if (primaryGradeIndex >= 4) {
+                    supplementaryInfo.push('個別指標反映更嚴重的身心壓力狀況');
+                } else {
+                    supplementaryInfo.push('部分指標提示需要注意壓力管理');
+                }
+            }
+
+            // 當有指標顯示較好狀況時
+            if ((lfhfGrade && lfhfGrade < primaryGradeIndex) || 
+            (pnn50Grade && pnn50Grade < primaryGradeIndex)) {
+                if (primaryGradeIndex >= 4) {
+                    supplementaryInfo.push('部分指標顯示身體仍保有一定恢復潛力');
+                } else {
+                    supplementaryInfo.push('部分指標反映良好的身心平衡狀態');
+                }
+            }
+    
+            return supplementaryInfo;
+        }
+
+        // 新增：根據 LFHF 值判斷對應級別
+        function getLFHFGrade(lfhfValue) {
+            if (lfhfValue === undefined) return null;
+    
+            if (lfhfValue > 0.3 && lfhfValue <= 0.8) return 1;
+            if (lfhfValue > 0.8 && lfhfValue <= 2.0) return 2;
+            if (lfhfValue > 1.5 && lfhfValue <= 3.0) return 3;
+            if (lfhfValue > 2.5 && lfhfValue <= 4.0) return 4;
+            if (lfhfValue > 3.5 && lfhfValue <= 6.0) return 5;
+            if (lfhfValue > 6.0 || lfhfValue <= 0.3) return 6;
+    
+            return null;
+        }
+
+        // 新增：根據 pNN50 值判斷對應級別
+        function getPNN50Grade(pnn50Value) {
+            if (pnn50Value === undefined) return null;
+    
+            if (pnn50Value > 30) return 1;
+            if (pnn50Value > 15 && pnn50Value <= 30) return 2;
+            if (pnn50Value > 10 && pnn50Value <= 20) return 3;
+            if (pnn50Value > 6 && pnn50Value <= 10) return 4;
+            if (pnn50Value > 3 && pnn50Value <= 6) return 5;
+            if (pnn50Value <= 3) return 6;
+    
+            return null;
+        }
+        
         function displayParameters(params) {
             const container = document.getElementById('parameters');
             container.innerHTML = '';
             
-            const parameterOrder = ['RMSSD', 'pNN50', 'LF', 'HF', 'LFHF', 'SDNN'];
+            const parameterOrder = ['SDNN', 'RMSSD', 'LF', 'HF', 'LFHF', 'pNN50'];
             
             parameterOrder.forEach(key => {
                 if (params[key] !== undefined) {
                     const value = params[key];
-                    const range = systemSettings.parameterRanges[key];
-                    
-                    let status = 'normal';
-                    if (range && (value < range.min || value > range.max)) {
-                        status = value < range.min ? 'warning' : 'danger';
-                    }
-                    
-                    const card = document.createElement('div');
-                    card.className = `param-card ${status}`;
-                    card.innerHTML = `
-                        <h4>${key}</h4>
-                        <div class="value">${Number.isInteger(value) ? value : value.toFixed(1)}</div>
-                    `;
-                    
-                    container.appendChild(card);
+                    let status = 'normal'; // 預設為綠色（理想範圍）
+        
+                // 根據圖表設定各參數的分級標準
+                if (key === 'SDNN') {
+                    if (value > 93) status = 'normal';      // 綠色：>93ms
+                    else if (value >= 32) status = 'warning'; // 黃色：32-93ms
+                    else status = 'danger';                 // 紅色：<32ms
                 }
+                else if (key === 'RMSSD') {
+                    if (value > 75) status = 'normal';      // 綠色：>75ms
+                    else if (value >= 19) status = 'warning'; // 黃色：19-75ms
+                    else status = 'danger';                 // 紅色：<19ms
+                }
+                else if (key === 'LF') {
+                    if (value > 900) status = 'normal';     // 綠色：>900ms²
+                    else if (value >= 193) status = 'warning'; // 黃色：193-900ms²
+                    else status = 'danger';                 // 紅色：<193ms²
+                }
+                else if (key === 'HF') {
+                    if (value > 3630) status = 'normal';    // 綠色：>3630ms²
+                    else if (value >= 82) status = 'warning';  // 黃色：82-3630ms²
+                    else status = 'danger';                 // 紅色：<82ms²
+                }
+                else if (key === 'LFHF') {
+                    if (value >= 0.5 && value <= 3.0) status = 'normal'; // 綠色：0.5-3.0
+                    else if (value > 3.0 && value <= 5.0) status = 'warning'; // 黃色：3.0-5.0
+                    else status = 'danger';                 // 紅色：>5.0 或 <0.5
+                }
+                else if (key === 'pNN50') {
+                    if (value > 50) status = 'normal';      // 綠色：>50%
+                    else if (value >= 6) status = 'warning';  // 黃色：6-50%
+                    else status = 'danger';                 // 紅色：<6%
+                }
+        
+                const card = document.createElement('div');
+                card.className = `param-card ${status}`;
+                card.innerHTML = `
+                    <h4>${key}</h4>
+                    <div class="value">${Number.isInteger(value) ? value : value.toFixed(1)}</div>
+                `;
+        
+                container.appendChild(card);
+            }
             });
         }
 
@@ -1224,9 +1906,18 @@ function setupDragAndDrop() {
                 resultDiv.innerHTML = `
                     <h3 style="color: ${hrvGrading.primary.color}; margin-bottom: 15px;">${hrvGrading.primary.name}</h3>
                     <p style="margin-bottom: 8px;"><strong>主要依據：</strong>rMSSD 值判斷</p>
-                    ${hrvGrading.supplementary.length > 0 ? `<p style="font-size: 0.9em; color: #6b7280; margin-bottom: 8px;"><strong>補充說明：</strong>${hrvGrading.supplementary.join('、')}</p>` : ''}
+
+                    <div class="chart-container-responsive" id="hrv-chart" style="display: none;">
+                        <div class="quadrant-chart">
+                            <div class="quadrant-background"></div>
+                            <div class="axis axis-horizontal"></div>
+                            <div class="axis axis-vertical"></div>
+                            <div class="y-axis-label">自律神經平衡</div>
+                            <div class="x-axis-label">副交感神經活性</div>
+                        </div>
+                    </div>
                 `;
-        
+
                 resultDiv.style.background = `${hrvGrading.primary.color}20`;
                 resultDiv.style.borderLeft = `4px solid ${hrvGrading.primary.color}`;
             } else {
@@ -1245,15 +1936,170 @@ function setupDragAndDrop() {
                 li.textContent = rec;
                 recommendationsDiv.appendChild(li);
             });
+
+            // 🔥 新增：顯示狀態描述
+            displayStateDescription(hrvGrading);
+
+            // 修正：根據當前輸入模式收集正確的參數
+            let params = {};
+            if (currentInputMethod === 'manual') {
+                params = collectFormData();
+            } else {
+                const inputValue = document.getElementById('barcodeInput').value.trim();
+                if (inputValue) {
+                    params = parseData(inputValue);
+                }
+            }
+
+            updateHRVChart(params, hrvGrading);
+        }
+
+        function displayStateDescription(hrvGrading = null) {
+            // 清除現有的狀態描述
+            const existingStateDesc = document.getElementById('stateDescription');
+            if (existingStateDesc) {
+                existingStateDesc.remove();
+            }
+
+            if (!hrvGrading || !hrvGrading.primary) return;
+
+            const stateDescriptions = {
+                grade1: [
+                    '早晨醒來即可活動，體力飽滿，很少感到疲憊',
+                    '一整天都能維持穩定的體能，不易感到累',
+                    '情緒平和、樂觀，偶有壓力也能自我轉化為動力',
+                    '與人互動時，語氣和緩，樂於分享與傾聽',
+                    '思考清晰，反應敏捷，工作時少有分心情況',
+                    '決策果斷，能同時處理多項任務且維持品質',
+                    '身體無明顯緊繃感，肩頸、背部放鬆自然',
+                    '入睡迅速、深睡期完整，夜間極少醒來'
+                ],
+                grade2: [
+                    '一般活動無困難，但遇到高強度工作或運動後恢復稍慢',
+                    '偶爾感受像是「小低潮」，面對突發狀況時心跳會加快，需要短暫休息',
+                    '大多時候心態穩定，但壓力累積到一定程度會出現焦躁',
+                    '容易因小事打亂情緒，需要有意識地放鬆',
+                    '平時專注力良好，但長時間工作後容易走神或出錯',
+                    '學習新事物或解決複雜問題時，精力維持約 1~2 小時',
+                    '覺得肩膀或下背肌肉略微緊繃，但不會長時間疼痛',
+                    '入睡約 15~20 分鐘，偶爾夜間醒來一次',
+                    '睡醒後需 10~20 分鐘才能完全清醒'
+                ],
+                grade3: [
+                    '早上醒來有沉重感，前半天精神不足',
+                    '容易在下午出現「能量崩盤」需要補眠或咖啡因',
+                    '情緒波動開始明顯，小事時常覺得焦躁或煩悶',
+                    '與人溝通時偶有耐心不足的情況',
+                    '注意力不集中，記憶力略有下降，容易忘記剛剛才做過的事',
+                    '感到肩頸酸痛或頭部壓力感',
+                    '短暫休息後仍需較長時間才能真正舒緩',
+                    '入睡需 20~30 分鐘，深睡期減少',
+                    '夜間易被光或聲音吵醒，醒後仍有疲倦感'
+                ],
+                grade4: [
+                    '常覺得力不從心，連日常走動也易感吃力',
+                    '頸、肩、腰經常痠痛',
+                    '內心持續緊繃、易緊張，或出現無名煩躁',
+                    '思路緩慢，決策拖延，容易因壓力逃避問題',
+                    '工作效率明顯下降，需要更多時間完成任務',
+                    '手心出汗、呼吸急促',
+                    '入睡時間超過 30 分鐘，易反覆翻醒',
+                    '夜間醒來 2~3 次，且難以快速再睡'
+                ],
+                grade5: [
+                    '長期疲憊，日常活動力不從心，體力持續透支',
+                    '易感冒或其他小毛病纏身',
+                    '持續焦慮或情緒低落，易感無助或沮喪',
+                    '感到悲觀，社交意願明顯下降',
+                    '多數時間處於「機械式」完成任務狀態，創造力幾乎停滯',
+                    '自我調適方法多數無效，甚至加重焦慮',
+                    '嚴重失眠，入睡常需 1 小時以上，睡眠斷裂',
+                    '睡眠時間不足 6 小時，且睡醒後仍極度疲憊'
+                ],
+                grade6: [
+                    '極度虛弱，日常走動或簡單家務都感到吃力',
+                    '長期免疫功能紊亂，慢性發炎或感冒頻繁',
+                    '持續低落、對事物喪失興趣，可能伴有無助或絕望感',
+                    '幾乎無法集中注意，思考停滯，難以組織基本語句',
+                    '記憶力嚴重下降，短期與長期記憶都有問題',
+                    '無法入睡或僅睡不到 3 小時',
+                    '即使睡著，仍無法緩解身心疲勞'
+                ]
+            };
+
+            const gradeKey = `grade${hrvGrading.primary.gradeIndex}`;
+            let descriptions = [...stateDescriptions[gradeKey]] || [];
+
+            // 根據補充說明添加特定症狀
+            let supplementaryDescriptions = [];
+            if (hrvGrading.supplementary && hrvGrading.supplementary.length > 0) {
+                hrvGrading.supplementary.forEach(info => {
+                    if (info.includes('LFHF') && info.includes('壓力')) {
+                        if (!descriptions.some(desc => desc.includes('緊張') || desc.includes('心跳'))) {
+                            supplementaryDescriptions.push('自律神經平衡偏向壓力反應，易有緊張感');
+                        }
+                    }
+                    if (info.includes('pNN50') && info.includes('疲勞')) {
+                        if (!descriptions.some(desc => desc.includes('恢復'))) {
+                            supplementaryDescriptions.push('心率變異度降低，身體恢復能力需要關注');
+                        }
+                    }
+                });
+            }
+
+            // 準備補充說明的 HTML
+            let supplementaryHTML = '';
+            if (hrvGrading.supplementary && hrvGrading.supplementary.length > 0) {
+                supplementaryHTML = `
+                    <div style="margin-top: 15px; padding: 15px; background: #eff6ff; border-radius: 6px; border: 1px solid #4c85b5;">
+                        <div style="font-size: 0.9em; color: #494949; line-height: 1.5; font-weight: 500;">
+                            <strong>補充說明：</strong>${hrvGrading.supplementary.join('、')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // 創建狀態描述區塊
+            const stateDescDiv = document.createElement('div');
+            stateDescDiv.id = 'stateDescription';
+            stateDescDiv.className = 'recommendations';
+
+            // 分別創建各個部分
+            const mainDescriptions = descriptions.concat(supplementaryDescriptions);
+            const listHTML = mainDescriptions.map(desc => `<li>${desc}</li>`).join('');
+
+            stateDescDiv.innerHTML = `
+                <h4>📋 狀態描述</h4>
+                <ul>
+                    ${listHTML}
+                </ul>
+                ${supplementaryHTML}
+            `;
+
+            // 插入到「個人化建議」前面
+            const recommendationsDiv = document.querySelector('.recommendations');
+            recommendationsDiv.parentNode.insertBefore(stateDescDiv, recommendationsDiv);
         }
 
         function getRecommendations(hrvGrading = null) {
             const recommendations = [];
 
-            // 添加HRV分級的建議
+            // 添加主要級別的建議
             if (hrvGrading && hrvGrading.primary && hrvGrading.primary.recommendations) {
                 hrvGrading.primary.recommendations.forEach(rec => {
                     if (rec.trim()) recommendations.push(rec);
+                });
+            }
+
+            // 根據補充說明添加相關級別的建議
+            if (hrvGrading && hrvGrading.supplementaryGrades) {
+                hrvGrading.supplementaryGrades.forEach(grade => {
+                    grade.recommendations.forEach(rec => {
+                        // 避免重複添加相同建議
+                        if (rec.trim() && !recommendations.includes(rec)) {
+                        recommendations.push(rec);
+                        }
+                    });
                 });
             }
 
@@ -1289,25 +2135,91 @@ function setupDragAndDrop() {
 
         function updateHRVGradesList() {
             const container = document.getElementById('hrvGradesList');
+            console.log('Container found:', container); // 🔥 加入這行除錯
             if (!container) return;
-    
+
             container.innerHTML = '';
-    
+
+            // 定義狀態描述內容
+            const stateDescriptions = {
+                grade1: [
+                    '早晨醒來即可活動，體力飽滿，很少感到疲憊',
+                    '一整天都能維持穩定的體能，不易感到累',
+                    '情緒平和、樂觀，偶有壓力也能自我轉化為動力',
+                    '與人互動時，語氣和緩，樂於分享與傾聽',
+                    '思考清晰，反應敏捷，工作時少有分心情況',
+                    '決策果斷，能同時處理多項任務且維持品質',
+                    '身體無明顯緊繃感，肩頸、背部放鬆自然',
+                    '入睡迅速、深睡期完整，夜間極少醒來'
+                ],
+                grade2: [
+                    '一般活動無困難，但遇到高強度工作或運動後恢復稍慢',
+                    '偶爾感受像是「小低潮」，面對突發狀況時心跳會加快，需要短暫休息',
+                    '大多時候心態穩定，但壓力累積到一定程度會出現焦躁',
+                    '容易因小事打亂情緒，需要有意識地放鬆',
+                    '平時專注力良好，但長時間工作後容易走神或出錯',
+                    '學習新事物或解決複雜問題時，精力維持約 1~2 小時',
+                    '覺得肩膀或下背肌肉略微緊繃，但不會長時間疼痛',
+                    '入睡約 15~20 分鐘，偶爾夜間醒來一次',
+                    '睡醒後需 10~20 分鐘才能完全清醒'
+                ],
+                grade3: [
+                    '早上醒來有沉重感，前半天精神不足',
+                    '容易在下午出現「能量崩盤」需要補眠或咖啡因',
+                    '情緒波動開始明顯，小事時常覺得焦躁或煩悶',
+                    '與人溝通時偶有耐心不足的情況',
+                    '注意力不集中，記憶力略有下降，容易忘記剛剛才做過的事',
+                    '感到肩頸酸痛或頭部壓力感',
+                    '短暫休息後仍需較長時間才能真正舒緩',
+                    '入睡需 20~30 分鐘，深睡期減少',
+                    '夜間易被光或聲音吵醒，醒後仍有疲倦感'
+                ],
+                grade4: [
+                    '常覺得力不從心，連日常走動也易感吃力',
+                    '頸、肩、腰經常痠痛',
+                    '內心持續緊繃、易緊張，或出現無名煩躁',
+                    '思路緩慢，決策拖延，容易因壓力逃避問題',
+                    '工作效率明顯下降，需要更多時間完成任務',
+                    '手心出汗、呼吸急促',
+                    '入睡時間超過 30 分鐘，易反覆翻醒',
+                    '夜間醒來 2~3 次，且難以快速再睡'
+                ],
+                grade5: [
+                    '長期疲憊，日常活動力不從心，體力持續透支',
+                    '易感冒或其他小毛病纏身',
+                    '持續焦慮或情緒低落，易感無助或沮喪',
+                    '感到悲觀，社交意願明顯下降',
+                    '多數時間處於「機械式」完成任務狀態，創造力幾乎停滯',
+                    '自我調適方法多數無效，甚至加重焦慮',
+                    '嚴重失眠，入睡常需 1 小時以上，睡眠斷裂',
+                    '睡眠時間不足 6 小時，且睡醒後仍極度疲憊'
+                ],
+                grade6: [
+                    '極度虛弱，日常走動或簡單家務都感到吃力',
+                    '長期免疫功能紊亂，慢性發炎或感冒頻繁',
+                    '持續低落、對事物喪失興趣，可能伴有無助或絕望感',
+                    '幾乎無法集中注意，思考停滯，難以組織基本語句',
+                    '記憶力嚴重下降，短期與長期記憶都有問題',
+                    '無法入睡或僅睡不到 3 小時',
+                    '即使睡著，仍無法緩解身心疲勞'
+                ]
+            };
+
             Object.entries(systemSettings.hrvGrading.grades).forEach(([gradeId, grade], index) => {
                 const gradeItem = document.createElement('div');
                 gradeItem.className = 'classification-item hrv-grade-item';
                 gradeItem.style.borderLeftColor = grade.color;
-        
+
                 gradeItem.innerHTML = `
                     <div class="classification-header">
                         <div><strong>級別 ${index + 1}</strong></div>
                     </div>
-            
+
                     <div class="form-group">
                         <label>級別名稱：</label>
                         <input type="text" class="form-input" value="${grade.name}" readonly>
                     </div>
-                    
+            
                     <div class="form-group">
                         <label>rMSSD 判斷範圍 (主要依據)：</label>
                         <div style="display: flex; gap: 10px; align-items: center;">
@@ -1322,7 +2234,7 @@ function setupDragAndDrop() {
                             注意：範圍判斷為 ${gradeId === 'grade1' ? '>最小值' : gradeId === 'grade6' ? '≤最大值' : '最小值 < 值 ≤ 最大值'}
                         </div>
                     </div>
-            
+
                     <div class="form-group">
                         <label>其他參數範圍 (補充判斷)：</label>
                         <div class="parameter-ranges">
@@ -1344,14 +2256,23 @@ function setupDragAndDrop() {
                             }).join('')}
                         </div>
                     </div>
-            
+
+                    <div class="form-group">
+                        <label>狀態描述：</label>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                            <ol style="margin: 0; padding-left: 20px; line-height: 1.6;">
+                                ${stateDescriptions[gradeId].map(desc => `<li style="margin-bottom: 8px; color: #374151;">${desc}</li>`).join('')}
+                            </ol>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label>建議事項：</label>
                         <div class="suggestions-list">
                             ${grade.recommendations.map((rec, recIndex) => `
                                 <div class="suggestion-item">
                                     <input type="text" class="suggestion-input" value="${rec}" 
-                                       onchange="updateHRVGradeRecommendation('${gradeId}', ${recIndex}, this.value)">
+                                        onchange="updateHRVGradeRecommendation('${gradeId}', ${recIndex}, this.value)">
                                     <button class="remove-btn" onclick="removeHRVGradeRecommendation('${gradeId}', ${recIndex})">移除</button>
                                 </div>
                             `).join('')}
@@ -1359,7 +2280,7 @@ function setupDragAndDrop() {
                         <button class="add-btn" onclick="addHRVGradeRecommendation('${gradeId}')">+ 新增建議</button>
                     </div>
                 `;
-        
+
                 container.appendChild(gradeItem);
             });
         }
