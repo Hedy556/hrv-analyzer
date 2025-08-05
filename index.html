@@ -829,33 +829,33 @@
     }
     
     .y-axis-label {
-        font-size: 12px;
-        left: -80px;     /* 增加左側空間 */
+        font-size: 14px;
+        left: -65px;     /* 增加左側空間 */
         top: 50%;
         transform: translateY(-50%) rotate(-90deg);
         z-index: 15;
     }
     
     .x-axis-label {
-        font-size: 12px;
-        bottom: -48px;   /* 增加下方空間 */
+        font-size: 14px;
+        bottom: -33px;   /* 增加下方空間 */
         left: 50%;
         transform: translateX(-50%);
         z-index: 15;
     }
     
     .x-axis-arrow {
-        bottom: -40px;  /* 固定位置 */
-        left: -31px;    /* 調整起始位置 */
+        bottom: -25px;  /* 固定位置 */
+        left: -25px;    /* 調整起始位置 */
         right: 0;
         height: 1px;
         background: linear-gradient(
             to right,
             #929292 0%,
-            #929292 35%,      /* 縮短起始段 */
-            transparent 35%,
-            transparent 75%,  /* 擴大文字區域 */
-            #929292 75%,
+            #929292 33%,      /* 縮短起始段 */
+            transparent 33%,
+            transparent 78%,  /* 擴大文字區域 */
+            #929292 78%,
             #929292 100%
         );
     }
@@ -870,17 +870,17 @@
     }
 
     .y-axis-arrow {
-        left: -35px;    /* 固定位置 */
+        left: -27px;    /* 固定位置 */
         top: 0;
-        bottom: -35px;  /* 調整底部位置 */
+        bottom: -25px;  /* 調整底部位置 */
         width: 1px;
         background: linear-gradient(
             to top,
             #929292 0%,
-            #929292 40%,      /* 縮短起始段 */
-            transparent 40%,
-            transparent 73%,  /* 擴大文字區域 */
-            #929292 73%,
+            #929292 38%,      /* 縮短起始段 */
+            transparent 38%,
+            transparent 75%,  /* 擴大文字區域 */
+            #929292 75%,
             #929292 100%
         );
     }
@@ -898,8 +898,8 @@
         width: 8px;
         height: 8px;
         border: 2px solid #929292;
-        bottom: -42px;   /* 與X軸對齊 */
-        left: -38px;     /* 與Y軸對齊 */
+        bottom: -27px;   /* 與X軸對齊 */
+        left: -30px;     /* 與Y軸對齊 */
         background: #929292;
         z-index: 10;
     }
@@ -975,15 +975,26 @@
     .quadrant-chart {
         margin: 15px auto 0 auto;
     }
-       
+    
+    
     .y-axis-label {
         font-size: 10px;
-        left: -78px;
+        left: -50px;
     }
     
     .x-axis-label {
         font-size: 10px;
-        bottom: -45px;
+        bottom: -25px;
+    }
+    
+    .x-axis-arrow {
+        bottom: -20px;
+        left: -20px;
+    }
+    
+    .y-axis-arrow {
+        left: -20px;
+        bottom: -20px;
     }
 
     .x-axis-arrow::after {
@@ -1008,8 +1019,8 @@
         width: 6px;      /* 更小手機更小 */
         height: 6px;
         border: 1.5px solid #929292;
-        bottom: -41px;
-        left: -37px;
+        bottom: -22px;
+        left: -22px;
     }
 
     .data-point {
