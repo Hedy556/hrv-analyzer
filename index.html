@@ -1253,12 +1253,12 @@
     <script>
         let systemSettings = {
             parameterRanges: {
-                'RMSSD': { min: 30, max: 100, description: '連續心跳間隔差異' },
+                'SDNN': { min: 50, max: 150, description: '心跳變異標準差' },
+                'rMSSD': { min: 30, max: 100, description: '連續心跳間隔差異' },
                 'pNN50': { min: 10, max: 50, description: '心跳變異程度' },
                 'LF': { min: 300, max: 1500, description: '低頻功率' },
                 'HF': { min: 300, max: 1000, description: '高頻功率' },
-                'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' },
-                'SDNN': { min: 50, max: 150, description: '心跳變異標準差' }
+                'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' }
             },
 
             hrvGrading: {
@@ -2737,12 +2737,12 @@ function loadSettings() {
                         // 恢復到最原始的預設值
                         systemSettings = {
                             parameterRanges: {
-                                'RMSSD': { min: 30, max: 100, description: '連續心跳間隔差異' },
+                                'SDNN': { min: 50, max: 150, description: '心跳變異標準差' },
+                                'rMSSD': { min: 30, max: 100, description: '連續心跳間隔差異' },
                                 'pNN50': { min: 10, max: 50, description: '心跳變異程度' },
                                 'LF': { min: 300, max: 1500, description: '低頻功率' },
                                 'HF': { min: 300, max: 1000, description: '高頻功率' },
-                                'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' },
-                                'SDNN': { min: 50, max: 150, description: '心跳變異標準差' }
+                                'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' }
                             },
                             hrvGrading: {
                                 enabled: true,
