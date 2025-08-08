@@ -1242,9 +1242,9 @@
 
             <div class="settings-section">
                 <button class="save-btn" onclick="saveSettings()">💾 儲存設定</button>
-                <button class="save-btn reset-btn" onclick="resetToDefault()">🔄 恢復預設</button>
                 <button class="save-btn" style="background: #818181;" onclick="exportSettings()">匯出設定</button>
                 <button class="save-btn" style="background: #afafaf;" onclick="importSettings()">匯入設定</button>
+                <button class="save-btn" style="background: #f59e0b;" onclick="initializeSettings()">🔧 初始化設定</button>
                 <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(this)">
             </div>
         </div>
@@ -2613,22 +2613,6 @@ function loadSettings() {
             }
         }
 
-        function resetToDefault() {
-            if (confirm('確定要恢復預設設定嗎？')) {
-                systemSettings.parameterRanges = {
-                    'RMSSD': { min: 30, max: 100, description: '連續心跳間隔差異' },
-                    'pNN50': { min: 10, max: 50, description: '心跳變異程度' },
-                    'LF': { min: 300, max: 1500, description: '低頻功率' },
-                    'HF': { min: 300, max: 1000, description: '高頻功率' },
-                    'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' },
-                    'SDNN': { min: 50, max: 150, description: '心跳變異標準差' }
-                };
-                
-                updateSettingsUI();
-                alert('已恢復預設設定！');
-            }
-        }
-
         function exportSettings() {
             try {
                 // 先收集當前頁面上的設定（確保匯出最新的修改）
@@ -2737,6 +2721,111 @@ function loadSettings() {
             reader.readAsText(file);
             input.value = '';
         }
+
+        function initializeSettings() {
+            const confirmMessage = 
+                '⚠️ 初始化設定將會：\n\n' +
+                '1. 清除所有自訂的參數範圍\n' +
+                '2. 重置所有HRV分級設定\n' +
+                '3. 恢復到系統原始預設值\n' +
+                '4. 清除瀏覽器中儲存的設定\n\n' +
+                '這個操作無法復原，確定要繼續嗎？';
+            
+            if (confirm(confirmMessage)) {
+                if (confirm('🔴 最後確認：真的要初始化所有設定嗎？')) {
+                    try {
+                        // 恢復到最原始的預設值
+                        systemSettings = {
+                            parameterRanges: {
+                                'RMSSD': { min: 30, max: 100, description: '連續心跳間隔差異' },
+                                'pNN50': { min: 10, max: 50, description: '心跳變異程度' },
+                                'LF': { min: 300, max: 1500, description: '低頻功率' },
+                                'HF': { min: 300, max: 1000, description: '高頻功率' },
+                                'LFHF': { min: 0.5, max: 2.5, description: '自律神經平衡' },
+                                'SDNN': { min: 50, max: 150, description: '心跳變異標準差' }
+                            },
+                            hrvGrading: {
+                                enabled: true,
+                                grades: {
+                                    grade1: {
+                                        name: '極佳恢復狀況',
+                                        rmssdRange: { min: 75, max: Infinity },
+                                        conditions: {
+                                            LFHF: { min: 0.3, max: 0.8 },
+                                            pNN50: { min: 30, max: Infinity }
+                                        },
+                                        color: '#599CBF',
+                                        recommendations: ['均衡營養：涵蓋水溶／脂溶性多種維他命及重要礦物質。', '細胞修復：加強對抗自由基的能力，支持組織再生。']
+                                    },
+                                    grade2: {
+                                        name: '良好平衡狀況',
+                                        rmssdRange: { min: 45, max: 75 },
+                                        conditions: {
+                                            LFHF: { min: 0.8, max: 2.0 },
+                                            pNN50: { min: 15, max: 30 }
+                                        },
+                                        color: '#82CEDB',
+                                        recommendations: ['能量支持：幫助提升日常活動所需的活力。', '基礎代謝：維持體內能量產生與消耗的平衡。']
+                                    },
+                                    grade3: {
+                                        name: '輕度疲勞狀態',
+                                        rmssdRange: { min: 25, max: 45 },
+                                        conditions: {
+                                            LFHF: { min: 1.5, max: 3.0 },
+                                            pNN50: { min: 10, max: 20 }
+                                        },
+                                        color: '#B29868',
+                                        recommendations: ['循環促進：改善微循環，讓氧氣與養分更有效地運送至全身。', '代謝協助：協助維持健康的能量生產與利用。']
+                                    },
+                                    grade4: {
+                                        name: '中度壓力狀態',
+                                        rmssdRange: { min: 19, max: 30 },
+                                        conditions: {
+                                            LFHF: { min: 2.5, max: 4.0 },
+                                            pNN50: { min: 6, max: 10 }
+                                        },
+                                        color: '#E2D5BC',
+                                        recommendations: ['身心放鬆：透過舒緩效果，減少肌肉與精神緊張。', '情緒舒緩：支持心理的穩定與正向調節。']
+                                    },
+                                    grade5: {
+                                        name: '高度壓力狀態',
+                                        rmssdRange: { min: 12, max: 19 },
+                                        conditions: {
+                                            LFHF: { min: 3.5, max: 6.0 },
+                                            pNN50: { min: 3, max: 6 }
+                                        },
+                                        color: '#FFB4A3',
+                                        recommendations: ['神經穩定：維持神經細胞功能與大腦健康。', '壓力適應：提升對急性或慢性壓力的耐受力。']
+                                    },
+                                    grade6: {
+                                        name: '極度失衡狀態',
+                                        rmssdRange: { min: 0, max: 12 },
+                                        conditions: {
+                                            LFHF: [{ min: 6.0, max: Infinity }, { min: 0, max: 0.3 }],
+                                            pNN50: { min: 0, max: 3 }
+                                        },
+                                        color: '#FF7B5E',
+                                        recommendations: ['深度修復：提供更強的細胞層級修護與整體機能恢復。', '免疫協調：同時支持免疫系統與身心健康的平衡。']
+                                    }
+                                }
+                            }
+                        };
+                        
+                        // 清除 localStorage
+                        localStorage.removeItem('hrvSystemSettings');
+                        
+                        // 更新UI
+                        updateSettingsUI();
+                        
+                        alert('✅ 設定已初始化為系統預設值！\n\n所有參數範圍和HRV分級設定已重置。');
+                        
+                    } catch (error) {
+                        console.error('初始化設定失敗：', error);
+                        alert('❌ 初始化失敗：' + error.message);
+                    }
+                }
+            }
+        }   
 
         // 系統初始化
 document.addEventListener('DOMContentLoaded', function() {
