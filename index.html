@@ -1156,6 +1156,11 @@
                                 <span class="hrv-input-unit">ms</span>
                             </div>
                             <div class="hrv-input-item">
+                                <label class="hrv-input-label">pNN50</label>
+                                <input type="number" class="hrv-input-field" id="input-pNN50" step="0.1" placeholder="請輸入">
+                                <span class="hrv-input-unit">%</span>
+                            </div>
+                            <div class="hrv-input-item">
                                 <label class="hrv-input-label">LF</label>
                                 <input type="number" class="hrv-input-field" id="input-LF" step="0.1" placeholder="請輸入">
                                 <span class="hrv-input-unit">ms²</span>
@@ -1170,11 +1175,7 @@
                                 <input type="number" class="hrv-input-field" id="input-LFHF" step="0.1" placeholder="請輸入">
                                 <span class="hrv-input-unit"></span>
                             </div>
-                            <div class="hrv-input-item">
-                                <label class="hrv-input-label">pNN50</label>
-                                <input type="number" class="hrv-input-field" id="input-pNN50" step="0.1" placeholder="請輸入">
-                                <span class="hrv-input-unit">%</span>
-                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -1242,6 +1243,9 @@
             <div class="settings-section">
                 <button class="save-btn" onclick="saveSettings()">💾 儲存設定</button>
                 <button class="save-btn reset-btn" onclick="resetToDefault()">🔄 恢復預設</button>
+                <button class="save-btn" style="background: #818181;" onclick="exportSettings()">匯出設定</button>
+                <button class="save-btn" style="background: #afafaf;" onclick="importSettings()">匯入設定</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(this)">
             </div>
         </div>
     </div>
@@ -1311,7 +1315,7 @@
                         recommendations: ['神經穩定：維持神經細胞功能與大腦健康。', '壓力適應：提升對急性或慢性壓力的耐受力。']
                     },
                     grade6: {
-                        name: '極度壓力狀態',
+                        name: '極度失衡狀態',
                         rmssdRange: { min: 0, max: 12 },
                         conditions: {
                             LFHF: [{ min: 6.0, max: Infinity }, { min: 0, max: 0.3 }],
@@ -1587,10 +1591,10 @@
                 const demoData = {
                     'SDNN': 68.3,
                     'RMSSD': 52.4,
+                    'pNN50': 30,
                     'LF': 615.2,
                     'HF': 525.8,
                     'LFHF': 1.2,
-                    'pNN50': 30
                 };
         
                 Object.entries(demoData).forEach(([param, value]) => {
@@ -1621,7 +1625,7 @@
 
         function clearAllData() {
             // 清除手動輸入表單
-            const inputIds = ['SDNN', 'RMSSD', 'LF', 'HF', 'LFHF', 'pNN50'];
+            const inputIds = ['SDNN', 'RMSSD', 'pNN50', 'LF', 'HF', 'LFHF'];
             inputIds.forEach(id => {
                 const input = document.getElementById(`input-${id}`);
                 if (input) {
@@ -1765,7 +1769,7 @@
 
         function collectFormData() {
             const params = {};
-            const inputIds = ['SDNN', 'RMSSD', 'LF', 'HF', 'LFHF', 'pNN50'];
+            const inputIds = ['SDNN', 'RMSSD', 'pNN50', 'LF', 'HF', 'LFHF'];
     
             inputIds.forEach(id => {
                 const input = document.getElementById(`input-${id}`);
@@ -1946,35 +1950,39 @@
     
             // LFHF 補充判斷
             if (params.LFHF !== undefined) {
-                if (params.LFHF < 0.3) {
-                    supplementaryInfo.push('自律神經平衡嚴重失調，副交感神經過度活躍');
-                } else if (params.LFHF > 6.0) {
-                    supplementaryInfo.push('自律神經平衡嚴重失調，交感神經過度亢奮');
-                } else if (params.LFHF > 3.5) {
-                    supplementaryInfo.push('自律神經偏向交感神經亢奮狀態');
-                } else if (params.LFHF > 2.5) {
-                    supplementaryInfo.push('自律神經平衡出現中度偏移');
-                } else if (params.LFHF > 1.5) {
-                    supplementaryInfo.push('自律神經平衡出現輕度偏移');
-                } else if (params.LFHF >= 0.3 && params.LFHF <= 0.8) {
-                    supplementaryInfo.push('自律神經平衡狀態良好');
+                if (params.LFHF <= 0.3) {  // ≤0.3
+                    supplementaryInfo.push('自律神經平衡嚴重失調，處於極度抑制或能量低落狀態');
+                } else if (params.LFHF > 6.0) {  // >6.0
+                    supplementaryInfo.push('自律神經平衡嚴重失調，處於過度警覺、焦慮、慢性壓力狀態');
+                } else if (params.LFHF > 3.5 && params.LFHF <= 6.0) {  // 3.5<值≤6.0
+                    supplementaryInfo.push('自律神經平衡嚴重失調，處於極度高壓跟疲勞的狀況');
+                } else if (params.LFHF > 2.5 && params.LFHF <= 4.0) {  // 2.5<值≤4.0
+                    supplementaryInfo.push('自律神經偏向交感神經亢奮狀態，需要更關注壓力及疲勞狀況');
+                } else if (params.LFHF > 1.5 && params.LFHF <= 3.0) {  // 1.5<值≤3.0
+                    supplementaryInfo.push('自律神經平衡出現中度偏移，感受到較高壓力及疲勞現象');
+                } else if (params.LFHF > 0.8 && params.LFHF <= 2.0) {  // 0.8<值≤2.0
+                    supplementaryInfo.push('自律神經平衡出現輕度偏移，感受到輕微壓力跟疲勞的現象');
+                } else if (params.LFHF > 0.3 && params.LFHF <= 0.8) {  // 0.3<值≤0.8
+                    supplementaryInfo.push('自律神經平衡，處於放鬆與修復最佳狀態');
                 }
             }
     
             // pNN50 補充判斷
             if (params.pNN50 !== undefined) {
-                if (params.pNN50 <= 3) {
-                    supplementaryInfo.push('心率變異度極低，身體恢復能力嚴重不足');
-                } else if (params.pNN50 <= 6) {
-                    supplementaryInfo.push('心率變異度偏低，身體恢復能力不佳');
-                } else if (params.pNN50 <= 10) {
-                    supplementaryInfo.push('心率變異度略低，恢復能力需要改善');
-                } else if (params.pNN50 <= 20) {
-                    supplementaryInfo.push('心率變異度中等，身體適應力尚可');
-                } else if (params.pNN50 > 30) {
-                    supplementaryInfo.push('心率變異度良好，身體恢復能力佳');
+                if (params.pNN50 <= 3) {  // ≤3%
+                    supplementaryInfo.push('自律神經調節能力失衡，身體處於過度警戒或崩潰狀態');
+                } else if (params.pNN50 > 3 && params.pNN50 <= 6) {  // 3<值≤6
+                    supplementaryInfo.push('自律神經調節能力極低，身體恢復能力嚴重不足');
+                } else if (params.pNN50 > 6 && params.pNN50 <= 10) {  // 6<值≤10
+                    supplementaryInfo.push('自律神經調節能力偏低，身體恢復能力不佳');
+                } else if (params.pNN50 > 10 && params.pNN50 <= 20) {  // 10<值≤20
+                    supplementaryInfo.push('自律神經調節能力略低，恢復能力需要改善');
+                } else if (params.pNN50 > 15 && params.pNN50 <= 30) {  // 15<值≤30
+                    supplementaryInfo.push('自律神經調節能力中等，身體適應力尚可');
+                } else if (params.pNN50 > 30) {  // >30
+                    supplementaryInfo.push('自律神經調節能力良好，身體恢復能力佳');
                 }
-            }  
+            }
     
             // 綜合判斷
             const lfhfGrade = getLFHFGrade(params.LFHF);
@@ -2006,14 +2014,14 @@
         // 新增：根據 LFHF 值判斷對應級別
         function getLFHFGrade(lfhfValue) {
             if (lfhfValue === undefined) return null;
-    
-            if (lfhfValue > 0.3 && lfhfValue <= 0.8) return 1;
-            if (lfhfValue > 0.8 && lfhfValue <= 2.0) return 2;
-            if (lfhfValue > 1.5 && lfhfValue <= 3.0) return 3;
-            if (lfhfValue > 2.5 && lfhfValue <= 4.0) return 4;
+
+            if (lfhfValue > 6.0 || lfhfValue <= 0.3) return 6;  // 最嚴重
             if (lfhfValue > 3.5 && lfhfValue <= 6.0) return 5;
-            if (lfhfValue > 6.0 || lfhfValue <= 0.3) return 6;
-    
+            if (lfhfValue > 2.5 && lfhfValue <= 4.0) return 4;
+            if (lfhfValue > 1.5 && lfhfValue <= 3.0) return 3;
+            if (lfhfValue > 0.8 && lfhfValue <= 2.0) return 2;
+            if (lfhfValue > 0.3 && lfhfValue <= 0.8) return 1;
+
             return null;
         }
 
@@ -2035,7 +2043,7 @@
             const container = document.getElementById('parameters');
             container.innerHTML = '';
             
-            const parameterOrder = ['SDNN', 'RMSSD', 'LF', 'HF', 'LFHF', 'pNN50'];
+            const parameterOrder = ['SDNN', 'RMSSD', 'pNN50', 'LF', 'HF', 'LFHF'];
             
             parameterOrder.forEach(key => {
                 if (params[key] !== undefined) {
@@ -2590,14 +2598,20 @@ function loadSettings() {
             });
             systemSettings.parameterRanges = paramRanges;
 
-                try {
-        localStorage.setItem('hrvSystemSettings', JSON.stringify(systemSettings));
-        alert('設定已儲存！');
-    } catch (error) {
-        console.error('儲存設定時發生錯誤：', error);
-        alert('儲存失敗：' + error.message);
-    }
-}
+            try {
+                localStorage.setItem('hrvSystemSettings', JSON.stringify(systemSettings));
+                
+                // 新增：詢問是否要匯出備份
+                if (confirm('設定已儲存！\n\n是否要匯出一份備份檔案？')) {
+                    exportSettings();
+                } else {
+                    alert('設定已儲存！');
+                }
+            } catch (error) {
+                console.error('儲存設定時發生錯誤：', error);
+                alert('儲存失敗：' + error.message);
+            }
+        }
 
         function resetToDefault() {
             if (confirm('確定要恢復預設設定嗎？')) {
@@ -2613,6 +2627,115 @@ function loadSettings() {
                 updateSettingsUI();
                 alert('已恢復預設設定！');
             }
+        }
+
+        function exportSettings() {
+            try {
+                // 先收集當前頁面上的設定（確保匯出最新的修改）
+                const currentSettings = collectCurrentSettings();
+                
+                const exportData = {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    settings: currentSettings
+                };
+                
+                const jsonString = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `HRV設定_${new Date().toLocaleDateString('zh-TW').replace(/\//g, '-')}.json`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('✅ 設定已匯出！');
+            } catch (error) {
+                console.error('匯出設定失敗：', error);
+                alert('❌ 匯出失敗：' + error.message);
+            }
+        }
+
+        // 輔助函數：收集當前頁面上的所有設定
+        function collectCurrentSettings() {
+            // 收集參數範圍設定
+            const paramRanges = {};
+            const rangeGroups = document.querySelectorAll('.range-input-group[data-param]');
+            
+            rangeGroups.forEach(elem => {
+                const param = elem.dataset.param;
+                const inputs = elem.querySelectorAll('input');
+                
+                paramRanges[param] = {
+                    min: parseFloat(inputs[0].value) || 0,
+                    max: parseFloat(inputs[1].value) || 100,
+                    description: inputs[2].value || ''
+                };
+            });
+            
+            // 收集HRV分級設定（從當前的 systemSettings）
+            return {
+                parameterRanges: paramRanges,
+                hrvGrading: systemSettings.hrvGrading
+            };
+        }
+
+        function importSettings() {
+            document.getElementById('importFile').click();
+        }
+
+        function handleImportFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            if (!file.name.endsWith('.json')) {
+                alert('❌ 請選擇 JSON 格式的設定檔案！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const importData = JSON.parse(e.target.result);
+                    
+                    if (!importData.settings || !importData.settings.parameterRanges || !importData.settings.hrvGrading) {
+                        throw new Error('設定檔案格式不正確');
+                    }
+                    
+                    const confirmMessage = `確定要匯入設定嗎？\n` +
+                                        `檔案版本：${importData.version || '未知'}\n` +
+                                        `匯出日期：${importData.exportDate ? new Date(importData.exportDate).toLocaleString('zh-TW') : '未知'}\n\n` +
+                                        `這將會覆蓋您目前的所有設定！`;
+                    
+                    if (confirm(confirmMessage)) {
+                        // 更新系統設定
+                        systemSettings.parameterRanges = importData.settings.parameterRanges;
+                        systemSettings.hrvGrading = importData.settings.hrvGrading;
+                        
+                        // 儲存到 localStorage
+                        localStorage.setItem('hrvSystemSettings', JSON.stringify(systemSettings));
+                        
+                        // 更新UI（重新渲染設定頁面）
+                        updateSettingsUI();
+                        
+                        alert('✅ 設定匯入成功！\n\n所有參數範圍和HRV分級設定已更新。');
+                    }
+                } catch (error) {
+                    console.error('匯入設定失敗：', error);
+                    alert('❌ 匯入失敗：' + error.message);
+                }
+            };
+            
+            reader.onerror = function() {
+                alert('❌ 檔案讀取失敗！');
+            };
+            
+            reader.readAsText(file);
+            input.value = '';
         }
 
         // 系統初始化
