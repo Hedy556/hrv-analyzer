@@ -457,7 +457,7 @@
             height: 100%;
             position: relative;
             border-radius: 15px;
-            background: linear-gradient(45deg, 
+            background: linear-gradient(135deg, 
                 #FFD9D1 0%, #FFD9D1 20%, #F1DBD2 33%, #E2DDD4 40%, 
                 #E2DDD4 60%, #D2D5D3 66%, #C1CDD3 80%, #C1CDD3 100%
             );
@@ -1330,7 +1330,7 @@
 
         let currentInputMethod = 'manual';
 
-        function switchInputMethod(method) {
+        function switchInputMethod(event, method) {
             currentInputMethod = method;
             
             // 更新按鈕狀態
@@ -1354,57 +1354,96 @@
         }
 
         // 十字象限圖相關函式
-        function calculateChartPosition(gradeIndex, lfhfValue) {
-            // X軸位置：級別1在左側，級別6在右側
-            const xPercent = 80 + ((gradeIndex - 1) / 5) * 60;
-    
-            // Y軸位置：自律神經平衡 - 根據LFHF值的健康程度
-            let yPercent;
-
-            if (lfhfValue >= 0.3 && lfhfValue <= 0.8) {
-                // 最佳範圍：圖表中央 45-55%
-                yPercent = 28;
-            } else if (lfhfValue > 0.8 && lfhfValue <= 2.0) {
-                // 良好範圍：稍微偏離中心 35-40%
-                yPercent = 41;
-            } else if (lfhfValue > 1.5 && lfhfValue <= 3.0) {
-                // 輕度異常：更偏離 25-30%
-                yPercent = 54;
-            } else if (lfhfValue > 2.5 && lfhfValue <= 4.0) {
-                // 中度異常：明顯偏離 15-20%
-                yPercent = 64;
-            } else if (lfhfValue > 3.5 && lfhfValue <= 6.0) {
-                // 高度異常：接近邊緣 10%
-                yPercent = 80;
-            } else if (lfhfValue > 6.0) {  // 大於 6.0
-                yPercent = 10;
-            } else if (lfhfValue < 0.3) {  // 小於 0.3
-                yPercent = 85;
+        function calculateChartPosition(rmssdValue, lfhfValue, isMainPoint = true) {
+            let xPercent, yPercent;
+            
+            if (isMainPoint) {
+                // 主標記點：X用實際rMSSD值，Y用rMSSD對應級別的LF/HF中心值
+                
+                // X軸：rMSSD實際值映射（0-100 對應 0%-100%）
+                // 假設rMSSD範圍 0-100，左邊是最小值，右邊是最大值
+                xPercent = Math.min(100, Math.max(0, (rmssdValue / 100) * 100));
+                
+                // Y軸：根據rMSSD級別取LF/HF中心值
+                const rmssdGrade = getRMSSDGrade(rmssdValue);
+                const lfhfCenter = getLFHFCenterByGrade(rmssdGrade);
+                
+                // LF/HF映射到Y軸（假設範圍0-8，底部是最小值，頂部是最大值）
+                yPercent = 100 - Math.min(100, Math.max(0, (lfhfCenter / 8) * 100));
+                
+            } else {
+                // 副標記點：Y用實際LF/HF值，X用LF/HF對應級別的rMSSD中心值
+                
+                // Y軸：LF/HF實際值映射
+                yPercent = 100 - Math.min(100, Math.max(0, (lfhfValue / 8) * 100));
+                
+                // X軸：根據LF/HF級別取rMSSD中心值
+                const lfhfGrade = getLFHFGrade(lfhfValue);
+                const rmssdCenter = getRMSSDCenterByGrade(lfhfGrade);
+                
+                // rMSSD映射到X軸
+                xPercent = Math.min(100, Math.max(0, (rmssdCenter / 100) * 100));
             }
-    
+            
             return { x: xPercent, y: yPercent };
         }
 
-        function createDataPoint(gradeResult, lfhfValue, isPrimary = true) {
-            const position = calculateChartPosition(gradeResult.gradeIndex, lfhfValue);
-    
+        // 根據rMSSD值判斷級別
+        function getRMSSDGrade(rmssdValue) {
+            if (rmssdValue > 75) return 1;
+            if (rmssdValue >= 45 && rmssdValue <= 75) return 2;
+            if (rmssdValue >= 25 && rmssdValue < 45) return 3;
+            if (rmssdValue >= 19 && rmssdValue < 25) return 4;
+            if (rmssdValue >= 12 && rmssdValue < 19) return 5;
+            if (rmssdValue < 12) return 6;
+
+            return null;
+        }
+
+        // 根據級別獲取LF/HF範圍的中心值
+        function getLFHFCenterByGrade(grade) {
+            const ranges = {
+                1: (0.3 + 0.8) / 2,     // 0.55
+                2: (0.8 + 2.0) / 2,     // 1.4
+                3: (1.5 + 3.0) / 2,     // 2.25
+                4: (2.5 + 4.0) / 2,     // 3.25
+                5: (3.5 + 6.0) / 2,     // 4.75
+                6: 6.5  // >6.0 or <0.3，取較高值代表
+            };
+            return ranges[grade] || 3.5;
+        }
+
+        // 根據級別獲取rMSSD範圍的中心值
+        function getRMSSDCenterByGrade(grade) {
+            const ranges = {
+                1: 87.5,  // >75，取一個代表值
+                2: (45 + 75) / 2,  // 60
+                3: (25 + 45) / 2,  // 35
+                4: (19 + 30) / 2,  // 24.5
+                5: (12 + 19) / 2,  // 15.5
+                6: 6   // <12，取一個代表值
+            };
+            return ranges[grade] || 35;
+        }
+
+        function createDataPoint(rmssdValue, lfhfValue, isPrimary = true) {
+            const position = calculateChartPosition(rmssdValue, lfhfValue, isPrimary);
+            
             const point = document.createElement('div');
             point.className = `data-point ${isPrimary ? 'primary' : 'secondary'}`;
             point.style.left = `${position.x}%`;
             point.style.top = `${position.y}%`;
-    
-            // 根據風險等級設定顏色：風險越高，級別數字越大
+            
             if (isPrimary) {
-                // 主要級別：固定使用 #4C8CC2
                 point.style.borderColor = '#4C8CC2';
             } else {
-                // 次要級別：使用 #4C8CC2 的50%透明度
                 point.style.borderColor = '#4C8CC2';
                 point.style.opacity = '0.5';
             }
-    
-            point.title = `${gradeResult.name} (級別${gradeResult.gradeIndex})`;
-    
+            
+            const grade = isPrimary ? getRMSSDGrade(rmssdValue) : getLFHFGrade(lfhfValue);
+            point.title = `${isPrimary ? '主標記' : '副標記'} (級別${grade})`;
+            
             return point;
         }
 
@@ -1412,28 +1451,31 @@
             const chartContainer = document.getElementById('hrv-chart');
             const chart = chartContainer.querySelector('.quadrant-chart');
 
-            // 清除現有數據點
-            const existingPoints = chart.querySelectorAll('.data-point');
-            existingPoints.forEach(point => point.remove());
+            // 清除舊點
+            chart.querySelectorAll('.data-point').forEach(p => p.remove());
 
-            if (hrvGrading && params.LFHF) {
-                // 顯示圖表
-                chartContainer.style.display = 'block';
-        
-                // 添加主要分級數據點（風險最嚴重的）
-                const primaryPoint = createDataPoint(hrvGrading.primary, params.LFHF, true);
-                chart.appendChild(primaryPoint);
-        
-                // 添加次要分級數據點（風險較輕微的）
-                if (hrvGrading.secondary && hrvGrading.secondary.length > 0) {
-                    hrvGrading.secondary.forEach(grade => {
-                        const secondaryPoint = createDataPoint(grade, params.LFHF, false);
-                        chart.appendChild(secondaryPoint);
-                    });
-                }
-            } else {
-                // 隱藏圖表
+            if (!(hrvGrading && params.LFHF !== undefined && params.RMSSD !== undefined)) {
                 chartContainer.style.display = 'none';
+                return;
+            }
+
+            chartContainer.style.display = 'block';
+
+            const rmssdValue = params.RMSSD;
+            const lfhfValue = params.LFHF;
+
+            // 主標記點
+            const primaryPoint = createDataPoint(rmssdValue, lfhfValue, true);
+            chart.appendChild(primaryPoint);
+
+            // 檢查分級是否不同
+            const rmssdGrade = getRMSSDGrade(rmssdValue);
+            const lfhfGrade = getLFHFGrade(lfhfValue);
+            
+            // 僅在分級不同時顯示副標記點
+            if (rmssdGrade !== lfhfGrade) {
+                const secondaryPoint = createDataPoint(rmssdValue, lfhfValue, false);
+                chart.appendChild(secondaryPoint);
             }
         }
 
@@ -1574,7 +1616,7 @@
             statusElement.className = type;
         }
 
-        function switchTab(tabName) {
+        function switchTab(event, tabName) {
             document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
@@ -1797,15 +1839,15 @@
                 if (gradeId === 'grade1') {
                     matches = rmssd > 75;
                 } else if (gradeId === 'grade2') {
-                    matches = rmssd > 45 && rmssd <= 75;
+                    matches = rmssd >= 45 && rmssd <= 75;
                 } else if (gradeId === 'grade3') {
-                    matches = rmssd > 25 && rmssd <= 45;
+                    matches = rmssd >= 25 && rmssd < 45;
                 } else if (gradeId === 'grade4') {
-                    matches = rmssd > 19 && rmssd <= 30;
+                    matches = rmssd >= 19 && rmssd < 25;
                 } else if (gradeId === 'grade5') {
-                    matches = rmssd > 12 && rmssd <= 19;
+                    matches = rmssd >= 12 && rmssd < 19;
                 } else if (gradeId === 'grade6') {
-                    matches = rmssd <= 12;
+                    matches = rmssd < 12;
                 }
 
                 if (matches) {
@@ -1817,17 +1859,15 @@
                 }
             });
 
+            // 其餘邏輯保持不變...
             if (matchingGrades.length === 0) return null;
 
-            // 選擇風險最嚴重的級別作為主要級別（級別數字越大 = 風險越高）
             matchingGrades.sort((a, b) => b.gradeIndex - a.gradeIndex);
             const primaryGrade = matchingGrades[0];
             const secondaryGrades = matchingGrades.slice(1);
 
-            // 生成補充說明
             const supplementaryInfo = generateSupplementaryInfo(params, primaryGrade);
 
-            // 保存補充級別的完整信息
             const supplementaryGrades = [];
             const lfhfGrade = getLFHFGrade(params.LFHF);
             const pnn50Grade = getPNN50Grade(params.pNN50);
@@ -1854,42 +1894,42 @@
 
         function findParameterGrade(paramName, value) {
             const matchingGrades = [];
-    
+
             Object.entries(systemSettings.hrvGrading.grades).forEach(([gradeId, grade]) => {
                 const condition = grade.conditions[paramName];
                 if (!condition) return;
-        
+
                 let matches = false;
-        
+
                 if (paramName === 'pNN50') {
-                    // pNN50邊界判斷邏輯（選擇較嚴重的）
+                    // pNN50邊界判斷邏輯
                     if (gradeId === 'grade1') {
-                        matches = value > 30;
+                        matches = value >= 30;
                     } else if (gradeId === 'grade2') {
-                        matches = value > 15 && value <= 30;
+                        matches = value >= 15 && value < 30;
                     } else if (gradeId === 'grade3') {
-                        matches = value > 10 && value <= 20;
+                        matches = value >= 10 && value < 20;
                     } else if (gradeId === 'grade4') {
-                        matches = value > 6 && value <= 10;
+                        matches = value >= 6 && value < 10;
                     } else if (gradeId === 'grade5') {
-                        matches = value > 3 && value <= 6;
+                        matches = value >= 3 && value < 6;
                     } else if (gradeId === 'grade6') {
-                        matches = value <= 3;
+                        matches = value < 3;
                     }
                 } else if (paramName === 'LFHF') {
-                    // LFHF邊界判斷邏輯（選擇較嚴重的）
+                    // LFHF邊界判斷邏輯
                     if (gradeId === 'grade1') {
-                        matches = value > 0.3 && value <= 0.8;
+                        matches = value >= 0.3 && value < 0.8;
                     } else if (gradeId === 'grade2') {
-                        matches = value > 0.8 && value <= 2.0;
+                        matches = value >= 0.8 && value < 2.0;
                     } else if (gradeId === 'grade3') {
-                        matches = value > 1.5 && value <= 3.0;
+                        matches = value >= 1.5 && value < 3.0;
                     } else if (gradeId === 'grade4') {
-                        matches = value > 2.5 && value <= 4.0;
+                        matches = value >= 2.5 && value < 4.0;
                     } else if (gradeId === 'grade5') {
-                        matches = value > 3.5 && value <= 6.0;
+                        matches = value >= 3.5 && value < 6.0;
                     } else if (gradeId === 'grade6') {
-                        matches = value > 6.0 || value <= 0.3;
+                        matches = value >= 6.0 || value < 0.3;
                     }
                 } else {
                     // 其他參數保持原來的邏輯
@@ -1904,18 +1944,17 @@
                         matches = value >= condition.min && value <= condition.max;
                     }
                 }
-        
+
                 if (matches) {
                     matchingGrades.push({ id: gradeId, ...grade, gradeIndex: parseInt(gradeId.replace('grade', '')) });
                 }
             });
 
-            // pNN50和LFHF：選擇較嚴重的級別（索引較大的）
             if (matchingGrades.length > 0) {
                 matchingGrades.sort((a, b) => b.gradeIndex - a.gradeIndex);
                 return matchingGrades[0];
             }
-    
+
             return null;
         }
 
@@ -2016,12 +2055,12 @@
         function getLFHFGrade(lfhfValue) {
             if (lfhfValue === undefined) return null;
 
-            if (lfhfValue > 6.0 || lfhfValue <= 0.3) return 6;  // 最嚴重
-            if (lfhfValue > 3.5 && lfhfValue <= 6.0) return 5;
-            if (lfhfValue > 2.5 && lfhfValue <= 4.0) return 4;
-            if (lfhfValue > 1.5 && lfhfValue <= 3.0) return 3;
-            if (lfhfValue > 0.8 && lfhfValue <= 2.0) return 2;
-            if (lfhfValue > 0.3 && lfhfValue <= 0.8) return 1;
+            if (lfhfValue >= 6.0 || lfhfValue < 0.3) return 6;  // 最嚴重
+            if (lfhfValue >= 3.5 && lfhfValue < 6.0) return 5;
+            if (lfhfValue >= 2.5 && lfhfValue < 4.0) return 4;
+            if (lfhfValue >= 1.5 && lfhfValue < 3.0) return 3;
+            if (lfhfValue >= 0.8 && lfhfValue < 2.0) return 2;
+            if (lfhfValue >= 0.3 && lfhfValue < 0.8) return 1;
 
             return null;
         }
@@ -2029,14 +2068,14 @@
         // 新增：根據 pNN50 值判斷對應級別
         function getPNN50Grade(pnn50Value) {
             if (pnn50Value === undefined) return null;
-    
-            if (pnn50Value > 30) return 1;
-            if (pnn50Value > 15 && pnn50Value <= 30) return 2;
-            if (pnn50Value > 10 && pnn50Value <= 20) return 3;
-            if (pnn50Value > 6 && pnn50Value <= 10) return 4;
-            if (pnn50Value > 3 && pnn50Value <= 6) return 5;
-            if (pnn50Value <= 3) return 6;
-    
+
+            if (pnn50Value >= 30) return 1;
+            if (pnn50Value >= 15 && pnn50Value < 30) return 2;
+            if (pnn50Value >= 10 && pnn50Value < 20) return 3;
+            if (pnn50Value >= 6 && pnn50Value < 10) return 4;
+            if (pnn50Value >= 3 && pnn50Value < 6) return 5;
+            if (pnn50Value < 3) return 6;
+
             return null;
         }
         
