@@ -458,8 +458,8 @@
             position: relative;
             border-radius: 15px;
             background: linear-gradient(45deg, 
-                #C1CDD3 0%, #C1CDD3 20%, #D2D5D3 33%, #E2DDD4 40%, 
-                #E2DDD4 60%, #F1DBD2 66%, #FFD9D1 80%, #FFD9D1 100%
+                #FFD9D1 0%, #FFD9D1 20%, #F1DBD2 33%, #E2DDD4 40%, 
+                #E2DDD4 60%, #D2D5D3 66%, #C1CDD3 80%, #C1CDD3 100%
             );
         }
 
@@ -1356,29 +1356,30 @@
         // 十字象限圖相關函式
         function calculateChartPosition(gradeIndex, lfhfValue) {
             // X軸位置：級別1在左側，級別6在右側
-            const xPercent = 15 + ((gradeIndex - 1) / 5) * 70;
+            const xPercent = 80 + ((gradeIndex - 1) / 5) * 60;
     
             // Y軸位置：自律神經平衡 - 根據LFHF值的健康程度
             let yPercent;
 
             if (lfhfValue >= 0.3 && lfhfValue <= 0.8) {
                 // 最佳範圍：圖表中央 45-55%
-                yPercent = 50;
+                yPercent = 28;
             } else if (lfhfValue > 0.8 && lfhfValue <= 2.0) {
                 // 良好範圍：稍微偏離中心 35-40%
-                yPercent = 37.5;
+                yPercent = 41;
             } else if (lfhfValue > 1.5 && lfhfValue <= 3.0) {
                 // 輕度異常：更偏離 25-30%
-                yPercent = 27.5;
+                yPercent = 54;
             } else if (lfhfValue > 2.5 && lfhfValue <= 4.0) {
                 // 中度異常：明顯偏離 15-20%
-                yPercent = 17.5;
+                yPercent = 64;
             } else if (lfhfValue > 3.5 && lfhfValue <= 6.0) {
                 // 高度異常：接近邊緣 10%
+                yPercent = 80;
+            } else if (lfhfValue > 6.0) {  // 大於 6.0
                 yPercent = 10;
-            } else {
-                // 極度異常（>6.0 或 <0.3）：邊緣位置 5% 或 95%
-                yPercent = lfhfValue > 6.0 ? 5 : 95;
+            } else if (lfhfValue < 0.3) {  // 小於 0.3
+                yPercent = 85;
             }
     
             return { x: xPercent, y: yPercent };
