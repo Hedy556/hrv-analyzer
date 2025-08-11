@@ -457,7 +457,7 @@
             height: 100%;
             position: relative;
             border-radius: 15px;
-            background: linear-gradient(135deg, 
+            background: linear-gradient(45deg, 
                 #FFD9D1 0%, #FFD9D1 20%, #F1DBD2 33%, #E2DDD4 40%, 
                 #E2DDD4 60%, #D2D5D3 66%, #C1CDD3 80%, #C1CDD3 100%
             );
@@ -1369,13 +1369,15 @@
                 const lfhfCenter = getLFHFCenterByGrade(rmssdGrade);
                 
                 // LF/HF映射到Y軸（假設範圍0-8，底部是最小值，頂部是最大值）
-                yPercent = 100 - Math.min(100, Math.max(0, (lfhfCenter / 8) * 100));
+                const lfhfReversed = 8 - lfhfCenter; // 反轉：大變小，小變大
+                yPercent = 100 - Math.min(100, Math.max(0, (lfhfReversed / 8) * 100));
                 
             } else {
                 // 副標記點：Y用實際LF/HF值，X用LF/HF對應級別的rMSSD中心值
                 
                 // Y軸：LF/HF實際值映射
-                yPercent = 100 - Math.min(100, Math.max(0, (lfhfValue / 8) * 100));
+                const lfhfValueReversed = 8 - lfhfValue;
+                yPercent = 100 - Math.min(100, Math.max(0, (lfhfValueReversed / 8) * 100));
                 
                 // X軸：根據LF/HF級別取rMSSD中心值
                 const lfhfGrade = getLFHFGrade(lfhfValue);
