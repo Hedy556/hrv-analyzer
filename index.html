@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HRV報告掃描分析系統</title>
     <script src="jsQR.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -1132,8 +1133,8 @@
                 
                 <!-- 輸入方式選擇 -->
                 <div class="input-method-tabs">
-                    <button class="method-tab active" onclick="switchInputMethod('manual')">✏️ 手動輸入</button>
-                    <button class="method-tab" onclick="switchInputMethod('qrcode')">📱 QR Code掃描</button>
+                    <button class="method-tab active" onclick="switchInputMethod(event, 'manual')">✏️ 手動輸入</button>
+                    <button class="method-tab" onclick="switchInputMethod(event, 'qrcode')">📱 QR Code掃描</button>
                 </div>
 
                 <!-- 手動輸入區域 -->
@@ -1213,6 +1214,9 @@
                 <div class="recommendations">
                     <h4>💡 個人化建議</h4>
                     <ul id="recommendationsList"></ul>
+                </div>
+                <div class="export-section" style="text-align: center; margin: 20px 0;">
+                    <button class="scan-btn" onclick="exportToPNG()" style="background: #10b981;">📸 下載分析報告</button>
                 </div>
                 <div class="disclaimer">
                     <strong>⚠️ 重要聲明：</strong>
@@ -1689,6 +1693,11 @@
                 existingStateDesc.remove();
             }
 
+            const userNameInput = document.getElementById('userName');
+            if (userNameInput) {
+                userNameInput.value = '';
+            }
+
             // 重置upload-area到原始狀態
             const uploadArea = document.querySelector('#qrcode-input .upload-area');
             if (uploadArea) {
@@ -1810,6 +1819,110 @@
             } catch (error) {
                 alert('❌ 數據處理錯誤！');
             }
+        }
+
+        function exportToPNG() {
+            const element = document.getElementById('results');
+            
+            // 直接詢問姓名（可以留空）
+            const userName = prompt('請輸入姓名（留空則不顯示姓名）：');
+            const finalUserName = userName ? userName.trim() : '';
+            
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '🔄 生成中...';
+            button.disabled = true;
+            
+            html2canvas(element, {
+                scale: 3,
+                backgroundColor: '#ffffff',
+                useCORS: true,
+                onclone: function(clonedDoc) {
+                    const exportSection = clonedDoc.querySelector('.export-section');
+                    if (exportSection) {
+                        exportSection.style.display = 'none';
+                    }
+                }
+            }).then(canvas => {
+                // 在圖片上添加姓名
+                if (finalUserName) {
+                    const finalCanvas = document.createElement('canvas');
+                    const ctx = finalCanvas.getContext('2d');
+                    
+                    finalCanvas.width = canvas.width;
+                    finalCanvas.height = canvas.height;
+                    
+                    // 先畫原始圖片
+                    ctx.drawImage(canvas, 0, 0);
+                    
+                    // 設定文字樣式
+                    const fontSize = Math.max(28, canvas.width / 25);
+                    ctx.font = `bold ${fontSize}px 'Microsoft JhengHei', 'PingFang TC', sans-serif`;
+                    
+                    // 計算文字位置和尺寸
+                    const margin = fontSize * 0.6;
+                    const textMetrics = ctx.measureText(finalUserName);
+                    const textWidth = textMetrics.width;
+                    const textHeight = fontSize;
+                    
+                    // 背景框位置
+                    const bgX = canvas.width - textWidth - margin * 2;
+                    const bgY = margin;
+                    const bgWidth = textWidth + margin * 1.5;
+                    const bgHeight = textHeight + margin * 1.2;
+                    
+                    // 繪製半透明背景框
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.strokeStyle = '#4C8CC2';
+                    ctx.lineWidth = 2;
+                    
+                    // 圓角矩形背景
+                    const radius = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(bgX + radius, bgY);
+                    ctx.lineTo(bgX + bgWidth - radius, bgY);
+                    ctx.quadraticCurveTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + radius);
+                    ctx.lineTo(bgX + bgWidth, bgY + bgHeight - radius);
+                    ctx.quadraticCurveTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - radius, bgY + bgHeight);
+                    ctx.lineTo(bgX + radius, bgY + bgHeight);
+                    ctx.quadraticCurveTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - radius);
+                    ctx.lineTo(bgX, bgY + radius);
+                    ctx.quadraticCurveTo(bgX, bgY, bgX + radius, bgY);
+                    ctx.closePath();
+                    
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // 繪製姓名文字
+                    ctx.fillStyle = '#374151';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(finalUserName, bgX + margin * 0.75, bgY + margin * 0.6);
+                    
+                    canvas = finalCanvas;
+                }
+                
+                // 生成檔名和下載
+                const dateStr = new Date().toLocaleDateString('zh-TW').replace(/\//g, '-');
+                const fileName = finalUserName ? 
+                    `${finalUserName}_HRV分析報告_${dateStr}.png` : 
+                    `HRV分析報告_${dateStr}.png`;
+                
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png', 1.0);
+                link.click();
+                
+                button.textContent = originalText;
+                button.disabled = false;
+                
+            }).catch(error => {
+                console.error('截圖生成失敗:', error);
+                alert('截圖生成失敗，請稍後再試');
+                
+                button.textContent = originalText;
+                button.disabled = false;
+            });
         }
 
         function collectFormData() {
@@ -2140,9 +2253,14 @@
             const resultDiv = document.getElementById('analysisResult');
             const recommendationsDiv = document.getElementById('recommendationsList');
 
+            // 獲取用戶輸入的姓名
+            const nameDisplay = '';
+
             if (hrvGrading && hrvGrading.primary) {
                 resultDiv.innerHTML = `
-                    <h3 style="color: ${hrvGrading.primary.color}; margin-bottom: 15px;">${hrvGrading.primary.name}</h3>
+                    <h3 style="color: ${hrvGrading.primary.color}; margin-bottom: 15px;">
+                        ${nameDisplay}${hrvGrading.primary.name}
+                    </h3>
                     <p style="margin-bottom: 8px;"><strong>主要依據：</strong>rMSSD 值判斷</p>
 
                     <div class="chart-container-responsive" id="hrv-chart" style="display: none;">
@@ -2161,13 +2279,14 @@
                 resultDiv.style.borderLeft = `4px solid ${hrvGrading.primary.color}`;
             } else {
                 resultDiv.innerHTML = `
-                    <h3 style="color: #dc2626;">無法進行HRV分級</h3>
+                    <h3 style="color: #dc2626;">${nameDisplay}無法進行HRV分級</h3>
                     <p>請確認輸入的數據是否正確</p>
                 `;
                 resultDiv.style.background = '#fef2f2';
                 resultDiv.style.borderLeft = '4px solid #dc2626';
             }
 
+            // 👇 這些是您缺少的重要代碼
             recommendationsDiv.innerHTML = '';
             const recommendations = getRecommendations(hrvGrading);
             recommendations.forEach(rec => {
@@ -2176,7 +2295,7 @@
                 recommendationsDiv.appendChild(li);
             });
 
-            // 🔥 新增：顯示狀態描述
+            // 顯示狀態描述
             displayStateDescription(hrvGrading);
 
             // 修正：根據當前輸入模式收集正確的參數
